@@ -1,6 +1,5 @@
----
-title: CODE FOR CODE
----
+# CODE FOR CODE
+
 
 ## Why
 
