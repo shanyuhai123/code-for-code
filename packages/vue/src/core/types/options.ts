@@ -5,7 +5,7 @@ interface PropOptions {
   validator?: Function
 }
 
-export interface ComponentOptions {
+export type ComponentOptions = {
   data: Object | Function | void
   props?: {
     [key: string]: PropOptions
