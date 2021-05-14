@@ -7,6 +7,17 @@ export const isPlainObject = (obj: any): boolean => _toString.call(obj) === '[ob
 
 export const noop = (a?: any, b?: any, c?: any): void => {}
 
+export const toArray = <T>(list: ArrayLike<T>, start: number = 0): Array<T> => {
+  let i = list.length - start
+
+  const ret = new Array(i)
+  while (i--) {
+    ret[i] = list[i + start]
+  }
+
+  return ret
+}
+
 /**
  * Ensure a function is called only once.
  * @param fn Function
