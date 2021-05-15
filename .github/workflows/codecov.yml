@@ -16,7 +16,7 @@ jobs:
           lerna bootstrap
           lerna run test:cov
           pwd
-          ls
+          tree packages -L 3
       # - name: Upload codecov 🚀
       #   uses: codecov/codecov-action@v1
       #   with:
