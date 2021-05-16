@@ -3,16 +3,20 @@ import { _init } from './instance/init'
 import { ComponentOptions } from './types/options'
 
 class Vue {
+  // constructor information
+  static options: Object
+
+  // private properties
   _uid: number = 0
   _events: {
     [key: string]: any[] | null
   } = {}
 
   _isVue: boolean = false
-
-  $options: Object = {}
-
   _hasHookEvent: boolean = false
+
+  // public properties
+  $options: Object = {}
 
   constructor (options: ComponentOptions = { data: {} }) {
     this._init(options)
@@ -24,7 +28,7 @@ class Vue {
   }
 
   // events
-  $on (this: Vue, event: string, fn: Function): Vue {
+  $on (this: Vue, event: string | Array<string>, fn: Function): Vue {
     return $on(this, event, fn)
   }
 
@@ -32,7 +36,7 @@ class Vue {
     return $once(this, event, fn)
   }
 
-  $off (this: Vue, event?: string, fn?: Function): Vue {
+  $off (this: Vue, event?: string| Array<string>, fn?: Function): Vue {
     return $off(this, event, fn)
   }
 

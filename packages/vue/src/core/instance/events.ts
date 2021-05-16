@@ -3,7 +3,7 @@ import { toArray } from '@/shared/util'
 import Vue from '..'
 import { invokeWithErrorHandling } from '../util'
 
-export const $on = (vm: Vue, event: string, fn: Function): Vue => {
+export const $on = (vm: Vue, event: string | Array<string>, fn: Function): Vue => {
   if (Array.isArray(event)) {
     for (let i = 0; i < event.length; i++) {
       vm.$on(event[i], fn)
@@ -30,7 +30,7 @@ export const $once = (vm: Vue, event: string, fn: Function): Vue => {
   return vm
 }
 
-export const $off = (vm: Vue, event?: string, fn?: Function): Vue => {
+export const $off = (vm: Vue, event?: string | Array<string>, fn?: Function): Vue => {
   // remove all
   if (!event) {
     vm._events = Object.create(null)

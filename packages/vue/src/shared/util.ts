@@ -7,6 +7,8 @@ export const isPlainObject = (obj: any): boolean => _toString.call(obj) === '[ob
 
 export const noop = (a?: any, b?: any, c?: any): void => {}
 
+export const no = (a?: any, b?: any, c?: any) => false
+
 export const toArray = <T>(list: ArrayLike<T>, start: number = 0): Array<T> => {
   let i = list.length - start
 
@@ -17,6 +19,21 @@ export const toArray = <T>(list: ArrayLike<T>, start: number = 0): Array<T> => {
 
   return ret
 }
+
+export const makeMap = (str: string, expectsLowerCase: boolean = false): (str: string) => boolean => {
+  const map = Object.create(null)
+  const list: Array<string> = str.split(',')
+
+  for (let i = 0; i < list.length; i++) {
+    map[list[i]] = true
+  }
+
+  return expectsLowerCase
+    ? (val: string) => map[val.toLowerCase()]
+    : (val: string) => map[val]
+}
+
+export const isBuiltInTag: (str: string) => boolean = makeMap('slot,component', true)
 
 /**
  * Ensure a function is called only once.
