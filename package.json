@@ -5,7 +5,8 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "test:cov": "jest --coverage"
   },
   "devDependencies": {
     "@types/jest": "^26.0.22",

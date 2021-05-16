@@ -1,4 +1,4 @@
-import { isBuiltInTag } from '@/shared/util'
+import { isBuiltInTag } from 'vue/shared/util'
 import { unicodeRegExp } from '.'
 import Vue from '..'
 import { ComponentOptions } from '../types/options'

@@ -1,4 +1,4 @@
-import { noop } from '@/shared/util'
+import { noop } from 'vue/shared/util'
 
 export let warn = noop
 

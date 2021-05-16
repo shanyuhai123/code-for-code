@@ -22,10 +22,6 @@
     "type": "git",
     "url": "git+https://github.com/shanyuhai123/code-for-code.git"
   },
-  "scripts": {
-    "test": "jest",
-    "test:cov": "jest --coverage"
-  },
   "bugs": {
     "url": "https://github.com/shanyuhai123/code-for-code/issues"
   },

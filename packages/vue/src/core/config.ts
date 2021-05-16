@@ -1,4 +1,4 @@
-import { no } from '@/shared/util'
+import { no } from 'vue/shared/util'
 
 type Config = {
   optionMergeStrategies: {

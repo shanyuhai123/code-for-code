@@ -1,5 +1,6 @@
-import { hookRE } from '@/shared/constants'
-import { toArray } from '@/shared/util'
+
+import { hookRE } from 'vue/shared/constants'
+import { toArray } from 'vue/shared/util'
 import Vue from '..'
 import { invokeWithErrorHandling } from '../util'
 

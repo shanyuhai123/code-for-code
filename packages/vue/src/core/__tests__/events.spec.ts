@@ -1,7 +1,8 @@
 import Vue from '..'
 
 describe('vue event bus', () => {
-  let vm: Vue, spy: jest.Mock
+  ;let vm: Vue
+  let spy: jest.Mock
 
   beforeEach(() => {
     vm = new Vue()
