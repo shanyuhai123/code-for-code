@@ -14,6 +14,7 @@ jobs:
       - name: Install and Build 🔧
         run: |
           yarn
+          yarn build
           yarn vite:build
 
       - name: Upload github pages 🚀
