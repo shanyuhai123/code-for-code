@@ -6,7 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "serve": "vite",
+    "vite:serve": "vite",
+    "vite:build": "vite build",
     "dev": "node ./scripts/dev.js",
     "build": "yarn build:vue-next",
     "build:vue-next": "node ./scripts/build-vue-next.js",
@@ -17,6 +18,7 @@
   "devDependencies": {
     "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-node-resolve": "^13.0.4",
+    "@rollup/plugin-replace": "^3.0.0",
     "@types/jest": "^27.0.1",
     "@types/node": "^16.7.2",
     "@typescript-eslint/eslint-plugin": "^4.21.0",
@@ -28,6 +30,7 @@
     "eslint-plugin-promise": "^5.1.0",
     "execa": "^5.1.1",
     "jest": "^27.0.6",
+    "minimist": "^1.2.5",
     "rollup": "^2.56.3",
     "rollup-plugin-typescript2": "^0.30.0",
     "ts-jest": "^27.0.5",

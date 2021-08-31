@@ -5,6 +5,5 @@
     "packages/global.d.ts",
     "packages/@vue/*/src",
     "packages/*/src",
-    "examples/libs/src"
   ]
 }

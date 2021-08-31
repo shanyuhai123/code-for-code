@@ -1,7 +1,2 @@
-import { NO } from '@vue/shared'
-
-export const pkg = {
-  name: 'reactivity'
-}
-
-console.log(NO)
+export { watchEffect } from './dep'
+export { reactive } from './reactive'
