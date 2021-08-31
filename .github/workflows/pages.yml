@@ -1,4 +1,4 @@
-name: CODE FOR CODE
+name: CODE FOR CODE(PAGES)
 on:
   push:
     branches:
