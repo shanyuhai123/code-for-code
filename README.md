@@ -10,14 +10,37 @@ JUST FOR FUN!
 
 
 
-## Works
-
-### Quick Start
+## Development Setup
 
 ```bash
-# quick add package
-lerna create xxx --private --es-module -y
-
-# should build lib before run dev
-lerna run build:lib
+yarn install
 ```
+
+### Build
+
+```bash
+# all packages
+yarn build
+# @vue packages
+yarn build:vue-next
+
+# only one package and watch
+# modify the `PACKAGE_PATH` and `target` in `scripts/dev.js` first, and then
+yarn dev
+```
+
+### serve
+
+```bash
+# open browser
+yarn serve
+```
+
+
+
+## Modules
+
+### vue-next
+
+- [x] shared
+- [ ] reactivity

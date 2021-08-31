@@ -2,25 +2,36 @@
   "name": "root",
   "private": true,
   "workspaces": [
+    "packages/@vue/*",
     "packages/*"
   ],
   "scripts": {
+    "serve": "vite",
+    "dev": "node ./scripts/dev.js",
+    "build": "yarn build:vue-next",
+    "build:vue-next": "node ./scripts/build-vue-next.js",
     "test": "jest",
-    "test:cov": "jest --coverage"
+    "test:cov": "jest --coverage",
+    "preinstall": "node ./scripts/checkYarn.js"
   },
   "devDependencies": {
-    "@types/jest": "^26.0.22",
-    "@types/node": "^14.14.41",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^13.0.4",
+    "@types/jest": "^27.0.1",
+    "@types/node": "^16.7.2",
     "@typescript-eslint/eslint-plugin": "^4.21.0",
     "@typescript-eslint/parser": "^4.21.0",
     "eslint": "^7.12.1",
     "eslint-config-standard": "^16.0.2",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "jest": "^26.6.3",
-    "lerna": "^4.0.0",
-    "ts-jest": "^26.5.5",
-    "typescript": "^4.2.4"
+    "eslint-plugin-promise": "^5.1.0",
+    "execa": "^5.1.1",
+    "jest": "^27.0.6",
+    "rollup": "^2.56.3",
+    "rollup-plugin-typescript2": "^0.30.0",
+    "ts-jest": "^27.0.5",
+    "typescript": "^4.4.2",
+    "vite": "^2.5.1"
   }
 }
