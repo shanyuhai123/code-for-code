@@ -1,0 +1,24 @@
+name: CODE FOR CODE
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2.3.1
+
+      - name: Install and Build 🔧
+        run: |
+          yarn
+          yarn vite:build
+
+      - name: Upload github pages 🚀
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.PAGES_TOKEN }}
+          publish_dir: examples/dist
+          commit_message: ${{ github.event.head_commit.message }}
