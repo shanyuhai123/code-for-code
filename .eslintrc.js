@@ -1,3 +1,10 @@
+const tsRules = {
+  'no-use-before-define': 'off',
+  '@typescript-eslint/no-use-before-define': ['error', { functions: false, classes: false }],
+  'no-redeclare': 'off',
+  '@typescript-eslint/no-redeclare': ['error']
+}
+
 module.exports = {
   env: {
     browser: true,
@@ -35,6 +42,7 @@ module.exports = {
       // catches unused variables but not args.
       { varsIgnorePattern: '.*', args: 'none' }
     ],
-    'no-control-regex': 'off'
+    'no-control-regex': 'off',
+    ...tsRules
   }
 }

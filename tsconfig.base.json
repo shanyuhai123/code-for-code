@@ -4,6 +4,7 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "lib": ["DOM", "ESNext"],
+    "types": ["jest", "node"],
     "useDefineForClassFields": false,
     "newLine": "lf",
     "noEmitOnError": true,

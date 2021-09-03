@@ -4,6 +4,8 @@
   "include": [
     "packages/global.d.ts",
     "packages/@vue/*/src",
+    "packages/@vue/*/__tests__",
     "packages/*/src",
+    "examples/src"
   ]
 }

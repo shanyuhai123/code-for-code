@@ -1,13 +1,5 @@
 import { isArray, isFunction, isMap, isObject, isPlainObject, isSet, objectToString } from '.'
 
-export const toDisplayString = (val: unknown): string => {
-  return val == null
-    ? ''
-    : isArray(val) || (isObject(val) && (val.toString === objectToString || !isFunction(val.toString)))
-      ? JSON.stringify(val, replacer, 2)
-      : String(val)
-}
-
 const replacer = (_key: string, val: any): any => {
   if (val && val.__v_isRef) {
     return replacer(_key, val.value)
@@ -26,4 +18,12 @@ const replacer = (_key: string, val: any): any => {
     return String(val)
   }
   return val
+}
+
+export const toDisplayString = (val: unknown): string => {
+  return val == null
+    ? ''
+    : isArray(val) || (isObject(val) && (val.toString === objectToString || !isFunction(val.toString)))
+      ? JSON.stringify(val, replacer, 2)
+      : String(val)
 }

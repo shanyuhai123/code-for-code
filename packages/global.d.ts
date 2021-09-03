@@ -9,3 +9,11 @@ declare let __NODE_JS__: boolean
 declare let __COMMIT__: string
 declare let __VERSION__: string
 declare let __COMPAT__: boolean
+
+declare namespace jest {
+  interface Matchers<R, T> {
+    toHaveBeenWarned(): R
+    toHaveBeenWarnedLast(): R
+    toHaveBeenWarnedTimes(n: number): R
+  }
+}

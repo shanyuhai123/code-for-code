@@ -70,6 +70,7 @@ const createConfig = (format, output) => {
     },
     external: [
       '@vue/reactivity',
+      '@vue/runtime-core',
       '@vue/shared'
     ]
   }
