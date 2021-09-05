@@ -16,4 +16,4 @@ export {
   ReactiveFlags
 } from './reactive'
 
-export { watchEffect } from './dep'
+export { effect } from './effect'

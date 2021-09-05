@@ -1,30 +1,37 @@
-import { reactive, readonly, shallowReactive, shallowReadonly } from '@vue/reactivity'
-// import { createApp, h } from '@vue/runtime-core'
+import { reactive, effect, ref } from '@vue/reactivity'
+import { createApp, h } from '@vue/runtime-core'
 
-// const App = {
-//   data: reactive({
-//     count: 1
-//   }),
-//   render () {
-//     return h('button', {
-//       class: 'blue',
-//       onClick: () => {
-//         console.log(this.data)
-//         this.data.count++
-//       }
-//     }, String(this.data.count))
-//   }
-// }
+const count = ref(1)
 
-// createApp(App).mount('#app')
-
-const state = shallowReadonly({
-  // count: 0,
-  foo: {
-    bar: 'baz'
+const App = {
+  data: reactive({
+    count: 1
+  }),
+  render () {
+    return h('button', {
+      class: 'blue',
+      onClick: () => {
+        // this.data.count++
+        count.value++
+      }
+    }, String(count.value))
   }
-})
+}
 
-state.foo.bar = 'hello world'
+createApp(App).mount('#app')
 
-console.log(state.foo)
+// const state = reactive({
+//   foo: 1,
+//   bar: 2,
+//   arr: [1, 2]
+// })
+
+// effect(() => {
+//   (app as Element).innerHTML = state.foo
+//   console.log(state.foo, state.bar)
+// })
+
+// setTimeout(() => {
+//   state.foo = 100
+//   state.arr.push(3)
+// }, 2000)

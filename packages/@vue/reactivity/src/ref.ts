@@ -1,6 +1,8 @@
 import { hasChanged, isObject } from '@vue/shared'
 import { CollectionTypes } from './collectionHandlers'
-import { reactive, toRaw } from './reactive'
+import { track, trigger } from './effect'
+import { TrackOpTypes, TriggerOpTypes } from './operations'
+import { reactive, Target, toRaw } from './reactive'
 
 export declare const RefSymbol: unique symbol
 type BaseTypes = string | number | boolean
@@ -44,6 +46,7 @@ class RefImpl<T> {
   }
 
   get value () {
+    track(this as Target, TrackOpTypes.GET, 'value')
     return this._value
   }
 
@@ -53,6 +56,7 @@ class RefImpl<T> {
     if (hasChanged(newVal, this._rawValue)) {
       this._rawValue = newVal
       this._value = this._shallow ? newVal : convert(newVal)
+      trigger(this as Target, TriggerOpTypes.SET, 'value', newVal)
     }
   }
 }
@@ -62,7 +66,7 @@ export function isRef (r: any): r is Ref {
   return Boolean(r && r.__v_isRef === true)
 }
 
-function createRef (rawValue: unknown, shallow: boolean) {
+function createRef (rawValue: unknown, shallow: boolean = false) {
   if (isRef(rawValue)) {
     return rawValue
   }
@@ -74,5 +78,5 @@ export function ref<T extends object>(value: T): ToRef<T>
 export function ref<T>(value: T): Ref<UnwrapRef<T>>
 export function ref<T = any>(): Ref<T | undefined>
 export function ref (value?: unknown) {
-  return createRef(value, false)
+  return createRef(value)
 }

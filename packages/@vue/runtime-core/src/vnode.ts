@@ -1,4 +1,4 @@
-import { watchEffect } from '@vue/reactivity'
+import { effect } from '@vue/reactivity'
 import { isArray } from '@vue/shared'
 import { VNode } from './h'
 import { patch } from './patch'
@@ -41,7 +41,7 @@ export function createApp (App: any) {
       throw new Error('未找到挂载 DOM')
     }
 
-    watchEffect(() => {
+    effect(() => {
       if (!isMounted) {
         prevVNode = App.render()
         mount(prevVNode, container)

@@ -1,34 +1,21 @@
-let activeEffect: Function | null
+import { ReactiveEffect } from './effect'
 
-export class Dep {
-  #effects = new Set<Function>()
-
-  depend () {
-    if (activeEffect) {
-      this.#effects.add(activeEffect)
-    }
-  }
-
-  notify () {
-    this.#effects.forEach(effect => effect())
-  }
+type TrackedMarkers = {
+  /**
+   * wasTracked
+   */
+  w: number
+  /**
+   * newTracked
+   */
+  n: number
 }
 
-const targetMap = new WeakMap()
+export type Dep = Set<ReactiveEffect> & TrackedMarkers
 
-export function getDep (target, key): Dep {
-  if (!targetMap.has(target)) {
-    targetMap.set(target, new Map())
-  }
-  const depMap = targetMap.get(target)
-  if (!depMap.has(key)) {
-    depMap.set(key, new Dep())
-  }
-  return depMap.get(key)
-}
-
-export function watchEffect (effect: Function) {
-  activeEffect = effect
-  effect()
-  activeEffect = null
+export const createDep = (effects?: ReactiveEffect[]): Dep => {
+  const dep = new Set<ReactiveEffect>(effects) as Dep
+  dep.w = 0
+  dep.n = 0
+  return dep
 }
