@@ -2,7 +2,9 @@ const tsRules = {
   'no-use-before-define': 'off',
   '@typescript-eslint/no-use-before-define': ['error', { functions: false, classes: false }],
   'no-redeclare': 'off',
-  '@typescript-eslint/no-redeclare': ['error']
+  '@typescript-eslint/no-redeclare': ['error'],
+  'no-useless-constructor': 'off',
+  '@typescript-eslint/no-useless-constructor': ['error']
 }
 
 module.exports = {

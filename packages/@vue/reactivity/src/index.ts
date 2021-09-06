@@ -1,7 +1,12 @@
 export {
   ref,
   isRef,
-  Ref
+  toRef,
+  toRefs,
+  Ref,
+  ToRef,
+  ToRefs,
+  UnwrapRef
 } from './ref'
 export {
   reactive,
@@ -13,7 +18,25 @@ export {
   shallowReadonly,
   markRaw,
   toRaw,
-  ReactiveFlags
+  ReactiveFlags,
+  UnwrapNestedRefs
 } from './reactive'
-
-export { effect } from './effect'
+export {
+  effect,
+  track,
+  trigger,
+  enableTracking,
+  pauseTracking,
+  resetTracking,
+  ITERATE_KEY,
+  ReactiveEffect,
+  ReactiveEffectRunner,
+  ReactiveEffectOptions,
+  EffectScheduler,
+  DebuggerEvent,
+  DebuggerEventExtraInfo
+} from './effect'
+export {
+  TrackOpTypes,
+  TriggerOpTypes
+} from './operations'

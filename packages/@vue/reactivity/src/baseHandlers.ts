@@ -2,6 +2,7 @@ import { extend, hasChanged, hasOwn, isArray, isIntegerKey, isObject, isSymbol }
 import { ITERATE_KEY, pauseTracking, resetTracking, track, trigger } from './effect'
 import { TrackOpTypes, TriggerOpTypes } from './operations'
 import { reactive, ReactiveFlags, reactiveMap, readonly, readonlyMap, shallowReactiveMap, shallowReadonlyMap, Target, toRaw } from './reactive'
+import { isRef } from './ref'
 
 const builtInSymbols = new Set(
   Object.getOwnPropertyNames(Symbol)
@@ -77,6 +78,11 @@ function createGetter (isReadonly = false, shallow = false) {
       return res
     }
 
+    if (isRef(res)) {
+      const shouldUnwrap = !targetIsArray
+      return shouldUnwrap ? res.value : res
+    }
+
     if (isObject(res)) {
       return isReadonly ? readonly(res) : reactive(res)
     }
@@ -96,6 +102,10 @@ function createSetter (shallow = false) {
     if (!shallow) {
       value = toRaw(value)
       oldValue = toRaw(oldValue)
+      if (!isArray(target) && isRef(oldValue) && !isRef(value)) {
+        oldValue.value = value
+        return true
+      }
     }
 
     const hadKey = isArray(target) && isIntegerKey(key)

@@ -67,10 +67,7 @@ export class ReactiveEffect<T = any> {
   constructor (
     public fn: () => T,
     public scheduler: EffectScheduler | null = null
-  ) {
-    this.fn = fn
-    this.scheduler = scheduler
-  }
+  ) {}
 
   run () {
     if (!this.active) {

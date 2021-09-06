@@ -1,8 +1,8 @@
-import { hasChanged, isObject } from '@vue/shared'
+import { hasChanged, isArray, isObject } from '@vue/shared'
 import { CollectionTypes } from './collectionHandlers'
 import { track, trigger } from './effect'
 import { TrackOpTypes, TriggerOpTypes } from './operations'
-import { reactive, Target, toRaw } from './reactive'
+import { isProxy, reactive, Target, toRaw } from './reactive'
 
 export declare const RefSymbol: unique symbol
 type BaseTypes = string | number | boolean
@@ -27,8 +27,6 @@ export type UnwrapRefSimple<T> = T extends Function | CollectionTypes | BaseType
         [P in keyof T]: P extends symbol ? T[P] : UnwrapRef<T[P]>
       }
       : T
-
-export type ToRef<T> = [T] extends [Ref] ? T : Ref<UnwrapRef<T>>
 
 const convert = <T extends unknown>(val: T): T =>
   isObject(val) ? reactive(val) : val
@@ -79,4 +77,44 @@ export function ref<T>(value: T): Ref<UnwrapRef<T>>
 export function ref<T = any>(): Ref<T | undefined>
 export function ref (value?: unknown) {
   return createRef(value)
+}
+
+class ObjectRefImpl<T extends object, K extends keyof T> {
+  // eslint-disable-next-line camelcase
+  public readonly __v_isRef = true
+
+  constructor (private readonly _object: T, private readonly _key: K) {}
+
+  get value () {
+    return this._object[this._key]
+  }
+
+  set value (newValue) {
+    this._object[this._key] = newValue
+  }
+}
+
+export type ToRef<T> = [T] extends [Ref] ? T : Ref<UnwrapRef<T>>
+export function toRef<T extends object, K extends keyof T> (
+  object: T,
+  key: K
+): ToRef<T[K]> {
+  const val = object[key]
+  return isRef(val) ? val : new ObjectRefImpl(object, key) as any
+}
+
+export type ToRefs<T = any> = {
+  [K in keyof T]: T[K] extends Ref ? T[K] : Ref<UnwrapRef<T[K]>>
+}
+export function toRefs<T extends object> (object: T): ToRefs<T> {
+  if (__DEV__ && !isProxy(object)) {
+    console.warn('toRefs() expects a reactive object but but received a plain one.')
+  }
+
+  const ret: any = isArray(object) ? new Array(object.length) : {}
+  for (const key in object) {
+    ret[key] = toRef(object, key)
+  }
+
+  return ret
 }
