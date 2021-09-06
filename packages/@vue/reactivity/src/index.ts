@@ -22,6 +22,9 @@ export {
   UnwrapNestedRefs
 } from './reactive'
 export {
+  computed
+} from './computed'
+export {
   effect,
   track,
   trigger,

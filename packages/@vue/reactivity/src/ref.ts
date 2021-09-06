@@ -35,7 +35,6 @@ class RefImpl<T> {
   private _value: T
   private _rawValue: T
 
-  // eslint-disable-next-line camelcase
   public readonly __v_isRef = true
 
   constructor (value: T, public readonly _shallow: boolean) {
@@ -80,7 +79,6 @@ export function ref (value?: unknown) {
 }
 
 class ObjectRefImpl<T extends object, K extends keyof T> {
-  // eslint-disable-next-line camelcase
   public readonly __v_isRef = true
 
   constructor (private readonly _object: T, private readonly _key: K) {}

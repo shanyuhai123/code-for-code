@@ -44,6 +44,7 @@ module.exports = {
       // catches unused variables but not args.
       { varsIgnorePattern: '.*', args: 'none' }
     ],
+    camelcase: ['error', { allow: ['__v_'] }],
     'no-control-regex': 'off',
     ...tsRules
   }
