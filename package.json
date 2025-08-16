@@ -1,0 +1,15 @@
+{
+  "name": "code-for-code",
+  "private": true,
+  "version": "1.0.0",
+  "description": "code for code",
+  "scripts": {
+    "new": "sh scripts/new-package.sh",
+    "dev": "vite"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^5.2.1",
+    "eslint": "^9.33.0",
+    "vite": "^7.1.2"
+  }
+}
