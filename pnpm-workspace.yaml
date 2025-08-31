@@ -1,2 +1,6 @@
 packages:
-  - './packages/*/*'
+  - 'packages/*/*'
+  - 'examples/*'
+
+catalog:
+  vite: ^7.1.2

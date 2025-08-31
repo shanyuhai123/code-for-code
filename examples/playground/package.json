@@ -1,0 +1,12 @@
+{
+  "name": "playground",
+  "version": "1.0.0",
+  "description": "Play Play Play",
+  "scripts": {
+    "dev": "vite"
+  },
+  "devDependencies": {
+    "vite": "catalog:",
+    "@vue/reactivity": "workspace:*"
+  }
+}

@@ -4,6 +4,12 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    vite:
+      specifier: ^7.1.2
+      version: 7.1.2
+
 importers:
 
   .:
@@ -11,12 +17,32 @@ importers:
       '@antfu/eslint-config':
         specifier: ^5.2.1
         version: 5.2.1(@vue/compiler-sfc@3.5.18)(eslint@9.33.0)(typescript@5.9.2)
+      '@types/node':
+        specifier: ^24.3.0
+        version: 24.3.0
       eslint:
         specifier: ^9.33.0
         version: 9.33.0
       vite:
-        specifier: ^7.1.2
-        version: 7.1.2(yaml@2.8.1)
+        specifier: 'catalog:'
+        version: 7.1.2(@types/node@24.3.0)(yaml@2.8.1)
+
+  examples/playground:
+    devDependencies:
+      '@vue/reactivity':
+        specifier: workspace:*
+        version: link:../../packages/@vue/reactivity
+      vite:
+        specifier: 'catalog:'
+        version: 7.1.2(@types/node@24.3.0)(yaml@2.8.1)
+
+  packages/@vue/reactivity:
+    dependencies:
+      '@vue/shared':
+        specifier: workspace:*
+        version: link:../shared
+
+  packages/@vue/shared: {}
 
 packages:
 
@@ -492,6 +518,9 @@ packages:
 
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
+
+  '@types/node@24.3.0':
+    resolution: {integrity: sha512-aPTXCrfwnDLj4VvXrm+UUCQjNEvJgNA8s5F1cvwQU+3KNltTOkBm1j30uNLyqqPNe7gE3KFzImYoZEfLhp4Yow==}
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
@@ -1535,6 +1564,9 @@ packages:
   ufo@1.6.1:
     resolution: {integrity: sha512-9a4/uxlTWJ4+a5i0ooc1rU7C7YOw3wT+UGqdeNNHWnOF9qcMBgLRS+4IYUqbczewFx4mLEig6gawh7X6mFlEkA==}
 
+  undici-types@7.10.0:
+    resolution: {integrity: sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag==}
+
   unist-util-is@6.0.0:
     resolution: {integrity: sha512-2qCTHimwdxLfz+YzdGfkqNlH0tLi9xjTnHddPmJwtIG9MGsdbutfTc4P+haPD7l7Cjxf/WZj+we5qfVPvvxfYw==}
 
@@ -1984,6 +2016,10 @@ snapshots:
       '@types/unist': 3.0.3
 
   '@types/ms@2.1.0': {}
+
+  '@types/node@24.3.0':
+    dependencies:
+      undici-types: 7.10.0
 
   '@types/unist@3.0.3': {}
 
@@ -3277,6 +3313,8 @@ snapshots:
 
   ufo@1.6.1: {}
 
+  undici-types@7.10.0: {}
+
   unist-util-is@6.0.0:
     dependencies:
       '@types/unist': 3.0.3
@@ -3308,7 +3346,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  vite@7.1.2(yaml@2.8.1):
+  vite@7.1.2(@types/node@24.3.0)(yaml@2.8.1):
     dependencies:
       esbuild: 0.25.9
       fdir: 6.5.0(picomatch@4.0.3)
@@ -3317,6 +3355,7 @@ snapshots:
       rollup: 4.46.2
       tinyglobby: 0.2.14
     optionalDependencies:
+      '@types/node': 24.3.0
       fsevents: 2.3.3
       yaml: 2.8.1
 

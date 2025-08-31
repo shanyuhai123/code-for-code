@@ -1,15 +1,16 @@
 {
   "name": "code-for-code",
-  "private": true,
   "version": "1.0.0",
+  "private": true,
   "description": "code for code",
   "scripts": {
     "new": "sh scripts/new-package.sh",
-    "dev": "vite"
+    "dev": "cd examples/playground && vite"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^5.2.1",
+    "@types/node": "^24.3.0",
     "eslint": "^9.33.0",
-    "vite": "^7.1.2"
+    "vite": "catalog:"
   }
 }
