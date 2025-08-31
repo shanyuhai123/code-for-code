@@ -1,23 +1,48 @@
-import { TrackOpTypes, TriggerOpTypes } from './constants'
+import { isObject } from '@vue/shared'
+import { ReactiveFlags, TrackOpTypes, TriggerOpTypes } from './constants'
 import { track, trigger } from './dep'
+import { reactive, reactiveMap } from './reactive'
 
 class BaseReactiveHandler implements ProxyHandler<object> {
   constructor(
-    public isReadonly: boolean,
+    public readonly _isReadonly: boolean,
+    public readonly _isShallow: boolean,
   ) {}
 
   get(target: object, key: string | symbol, receiver: object): any {
+    const isReadonly = this._isReadonly
+
+    if (key === ReactiveFlags.IS_REACTIVE) {
+      return !isReadonly
+    }
+    else if (key === ReactiveFlags.IS_READONLY) {
+      return isReadonly
+    }
+    else if (key === ReactiveFlags.RAW) {
+      if (receiver === reactiveMap.get(target)) {
+        return target
+      }
+
+      return
+    }
+
     const res = Reflect.get(target, key, receiver)
 
     track(target, TrackOpTypes.GET, key)
+
+    if (isObject(res)) {
+      return reactive(res)
+    }
 
     return res
   }
 }
 
 class MutableReactiveHandler extends BaseReactiveHandler {
-  constructor() {
-    super(false)
+  constructor(
+    isShallow = false,
+  ) {
+    super(false, isShallow)
   }
 
   set(

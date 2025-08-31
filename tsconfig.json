@@ -21,7 +21,8 @@
     "baseUrl": ".",
     "paths": {
       "@vue/*": ["packages/@vue/*/src"],
-    }
+    },
+    "types": ["vitest/globals", "node"]
   },
   "include": [
     "packages/global.d.ts",
