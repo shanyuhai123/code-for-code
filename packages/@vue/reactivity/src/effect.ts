@@ -1,5 +1,8 @@
 import type { Dep } from './dep'
+import { extend } from '@vue/shared'
 import { activeEffectScope } from './effectScope'
+
+export type EffectScheduler = (...args: any[]) => any
 
 export let activeEffect: ReactiveEffect | undefined
 export let shouldTrack = true
@@ -9,7 +12,10 @@ export class ReactiveEffect<T = any> {
 
   deps: Dep[] = []
 
-  constructor(public fn: () => T) {
+  constructor(
+    public fn: () => T,
+    public scheduler: EffectScheduler | null = null,
+  ) {
     if (activeEffectScope && activeEffectScope.active) {
       activeEffectScope.effects.push(this)
     }
@@ -37,6 +43,10 @@ export class ReactiveEffect<T = any> {
   }
 }
 
+export interface ReactiveEffectOptions {
+  scheduler?: EffectScheduler
+}
+
 export interface ReactiveEffectRunner<T = any> {
   (): T
   effect: ReactiveEffect
@@ -44,8 +54,13 @@ export interface ReactiveEffectRunner<T = any> {
 
 export function effect<T = any>(
   fn: () => T,
+  options?: ReactiveEffectOptions,
 ) {
   const e = new ReactiveEffect(fn)
+
+  if (options) {
+    extend(e, options)
+  }
 
   try {
     e.run()

@@ -28,7 +28,12 @@ export class Dep {
     const effectToRun = new Set(this.effect)
     effectToRun.forEach((e) => {
       if (e !== activeEffect) {
-        e.run()
+        if (e.scheduler) {
+          e.scheduler()
+        }
+        else {
+          e.run()
+        }
       }
     })
   }

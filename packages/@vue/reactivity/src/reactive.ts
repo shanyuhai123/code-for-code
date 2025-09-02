@@ -7,7 +7,7 @@ export interface Target {
   [ReactiveFlags.SKIP]?: boolean
   [ReactiveFlags.IS_REACTIVE]?: boolean
   [ReactiveFlags.IS_READONLY]?: boolean
-  [ReactiveFlags.RAW]?: boolean
+  [ReactiveFlags.RAW]?: any
 }
 
 export const reactiveMap: WeakMap<Target, any> = new WeakMap<Target, any>()
@@ -70,4 +70,9 @@ export function isReactive(value: unknown): boolean {
 
 export function isReadonly(value: unknown): boolean {
   return !!(value && (value as Target)[ReactiveFlags.IS_READONLY])
+}
+
+export function toRaw<T>(observed: T): T {
+  const raw = observed && (observed as Target)[ReactiveFlags.RAW]
+  return raw ? toRaw(raw) : observed
 }
