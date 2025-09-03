@@ -8,5 +8,6 @@ export default antfu({
     'node/prefer-global/process': 'off',
     'import/no-mutable-exports': 'off',
     'ts/no-this-alias': 'off',
+    'ts/prefer-literal-enum-member': ['error', { allowBitwiseExpressions: true }],
   },
 })

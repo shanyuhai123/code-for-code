@@ -1,41 +1,119 @@
 import type { TrackOpTypes, TriggerOpTypes } from './constants'
-import type { ReactiveEffect } from './effect'
-import { activeEffect, shouldTrack } from './effect'
+import type { Subscriber } from './effect'
+import { activeSub, EffectFlags, endBatch, shouldTrack, startBatch } from './effect'
 
 export const ITERATE_KEY: unique symbol = Symbol(__DEV__ ? 'Object iterate' : '')
 
+export let globalVersion = 0
+
+export class Link {
+  version: number
+
+  /**
+   * 双链表
+   */
+  nextDep?: Link
+  prevDep?: Link
+  nextSub?: Link
+  prevSub?: Link
+  prevActiveLink?: Link
+
+  constructor(
+    public sub: Subscriber,
+    public dep: Dep,
+  ) {
+    this.version = dep.version
+
+    this.nextDep
+      = this.prevDep
+      = this.nextSub
+      = this.prevSub
+      = this.prevActiveLink
+        = undefined
+  }
+}
+
 export class Dep {
   version = 0
+  activeLink?: Link = undefined
+
+  /**
+   * tail
+   */
+  subs?: Link = undefined
+  /**
+   * head
+   */
+  subsHead?: Link = undefined
 
   map?: KeyToDepMap = undefined
   key?: unknown = undefined
-  effect = new Set<ReactiveEffect>()
+
+  /**
+   * 订阅数
+   */
+  sc: number = 0
 
   constructor() {
 
   }
 
   track() {
-    if (!shouldTrack || !activeEffect) {
+    if (!shouldTrack || !activeSub) {
       return
     }
 
-    this.effect.add(activeEffect)
-    activeEffect.deps.push(this)
+    let link = this.activeLink
+    if (link === undefined) {
+      link = this.activeLink = new Link(activeSub, this)
+
+      if (!activeSub.deps) {
+        activeSub.deps = activeSub.depsTail = link
+      }
+      else {
+        link.prevDep = activeSub.depsTail
+        activeSub.depsTail!.nextDep = link
+        activeSub.depsTail = link
+      }
+
+      addSub(link)
+    }
+
+    return link
   }
 
   trigger() {
-    const effectToRun = new Set(this.effect)
-    effectToRun.forEach((e) => {
-      if (e !== activeEffect) {
-        if (e.scheduler) {
-          e.scheduler()
-        }
-        else {
-          e.run()
-        }
+    this.version++
+    globalVersion++
+    this.notify()
+  }
+
+  notify() {
+    startBatch()
+
+    try {
+      for (let link = this.subs; link; link = link.nextSub) {
+        link.sub.notify()
       }
-    })
+    }
+    finally {
+      endBatch()
+    }
+  }
+}
+
+function addSub(link: Link) {
+  link.dep.sc++
+
+  if (link.sub.flags & EffectFlags.TRACKING) {
+    const currentTail = link.dep.subs
+    if (currentTail !== link) {
+      link.prevSub = currentTail
+      if (currentTail)
+        currentTail.nextSub = link
+    }
+
+    link.dep.subs = link
   }
 }
 
@@ -43,7 +121,7 @@ type KeyToDepMap = Map<any, Dep>
 export const targetMap: WeakMap<object, KeyToDepMap> = new WeakMap()
 
 export function track(target: object, type: TrackOpTypes, key: unknown): void {
-  if (shouldTrack && activeEffect) {
+  if (shouldTrack && activeSub) {
     let depsMap = targetMap.get(target)
     if (!depsMap) {
       targetMap.set(target, (depsMap = new Map()))
