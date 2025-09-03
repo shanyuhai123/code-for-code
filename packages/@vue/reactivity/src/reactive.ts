@@ -1,3 +1,4 @@
+import type { Ref, UnwrapRefSimple } from './ref'
 import { isObject } from '@vue/shared'
 import { mutableHandlers } from './baseHandlers'
 import { ReactiveFlags } from './constants'
@@ -12,7 +13,18 @@ export interface Target {
 
 export const reactiveMap: WeakMap<Target, any> = new WeakMap<Target, any>()
 
-export function reactive<T extends object>(target: T): T
+export type UnwrapNestedRefs<T> = T extends Ref ? T : UnwrapRefSimple<T>
+
+declare const ReactiveMarkerSymbol: unique symbol
+
+export interface ReactiveMarker {
+  [ReactiveMarkerSymbol]?: void
+}
+
+export type Reactive<T> = UnwrapNestedRefs<T>
+  & (T extends readonly any[] ? ReactiveMarker : {})
+
+export function reactive<T extends object>(target: T): Reactive<T>
 export function reactive(target: object) {
   if (isReadonly(target)) {
     return target
@@ -61,6 +73,10 @@ function createReactiveObject(
   return proxy
 }
 
+export declare const ShallowReactiveMarker: unique symbol
+
+export type ShallowReactive<T> = T & { [ShallowReactiveMarker]?: true }
+
 export function isReactive(value: unknown): boolean {
   if (isReadonly(value)) {
     return isReactive((value as Target)[ReactiveFlags.RAW])
@@ -75,4 +91,8 @@ export function isReadonly(value: unknown): boolean {
 export function toRaw<T>(observed: T): T {
   const raw = observed && (observed as Target)[ReactiveFlags.RAW]
   return raw ? toRaw(raw) : observed
+}
+
+export function toReactive<T extends unknown>(value: T) {
+  return isObject(value) ? reactive(value) : value
 }
