@@ -1,4 +1,4 @@
-import { effect, reactive, ref } from '@vue/reactivity'
+import { effect, reactive, ref, watch } from '@vue/reactivity'
 
 const count = ref(0)
 // const obj = reactive({
@@ -6,9 +6,9 @@ const count = ref(0)
 //   num: 123,
 // })
 
-effect(() => {
-  document.body.innerHTML = `${count.value}`
-})
+watch(count, (newVal, oldVal) => {
+  console.log(newVal, oldVal)
+}, { immediate: true })
 
 setTimeout(() => {
   count.value++

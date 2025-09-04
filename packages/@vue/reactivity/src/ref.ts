@@ -40,6 +40,8 @@ class RefImpl<T = any> {
 
   dep: Dep = new Dep()
 
+  public readonly [ReactiveFlags.IS_REF] = true
+
   constructor(value: T) {
     this._rawValue = toRaw(value)
     this._value = toReactive(value) as T

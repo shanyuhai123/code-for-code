@@ -14,3 +14,7 @@ export {
 export {
   ref,
 } from './ref'
+
+export {
+  watch,
+} from './watch'
