@@ -64,7 +64,7 @@ export class Dep {
     }
 
     let link = this.activeLink
-    if (link === undefined) {
+    if (link === undefined || link.sub !== activeSub) {
       link = this.activeLink = new Link(activeSub, this)
 
       if (!activeSub.deps) {
@@ -92,7 +92,7 @@ export class Dep {
     startBatch()
 
     try {
-      for (let link = this.subs; link; link = link.nextSub) {
+      for (let link = this.subs; link; link = link.prevSub) {
         link.sub.notify()
       }
     }
@@ -113,6 +113,9 @@ function addSub(link: Link) {
         currentTail.nextSub = link
     }
 
+    if (link.dep.subsHead === undefined) {
+      link.dep.subsHead = link
+    }
     link.dep.subs = link
   }
 }
