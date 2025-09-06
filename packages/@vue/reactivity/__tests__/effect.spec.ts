@@ -40,4 +40,66 @@ describe('reactivity/effect', () => {
     expect(dummy1).toBe(1)
     expect(dummy2).toBe(2)
   })
+
+  it('should observe nested properties', () => {
+    let dummy
+    const counter = reactive({ nested: { num: 0 } })
+    effect(() => dummy = counter.nested.num)
+
+    expect(dummy).toBe(0)
+    counter.nested.num++
+    expect(dummy).toBe(1)
+  })
+
+  it('should observe delete operations', () => {
+    let dummy
+    const obj = reactive<{ prop?: string }>({ prop: 'value' })
+    effect(() => dummy = obj.prop)
+
+    expect(dummy).toBe('value')
+    delete obj.prop
+    expect(dummy).toBe(undefined)
+  })
+
+  it('should observe has operations', () => {
+    let dummy
+    const obj = reactive<{ prop?: string | number }>({ prop: 'value' })
+    effect(() => (dummy = 'prop' in obj))
+
+    expect(dummy).toBe(true)
+    delete obj.prop
+    expect(dummy).toBe(false)
+    obj.prop = 'hi'
+    expect(dummy).toBe(true)
+  })
+
+  it('should not track non-reactive properties', () => {
+    const obj: any = reactive({})
+    let has = false
+    const fnSpy = vi.fn()
+    effect(() => {
+      fnSpy()
+      has = Object.prototype.hasOwnProperty.call(obj, 'foo')
+    })
+
+    expect(fnSpy).toHaveBeenCalledTimes(1)
+    expect(has).toBe(false)
+    delete obj.foo
+    expect(fnSpy).toHaveBeenCalledTimes(1)
+    expect(has).toBe(false)
+  })
+
+  it('should observe function call chains', () => {
+    let dummy
+    const counter = reactive({ num: 0 })
+    effect(() => dummy = getNum())
+
+    function getNum() {
+      return counter.num
+    }
+
+    expect(dummy).toBe(0)
+    counter.num = 2
+    expect(dummy).toBe(2)
+  })
 })

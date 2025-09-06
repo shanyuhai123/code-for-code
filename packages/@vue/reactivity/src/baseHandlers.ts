@@ -57,6 +57,30 @@ class MutableReactiveHandler extends BaseReactiveHandler {
 
     return res
   }
+
+  has(
+    target: object,
+    key: string | symbol,
+  ) {
+    const res = Reflect.has(target, key)
+
+    track(target, TrackOpTypes.HAS, key)
+
+    return res
+  }
+
+  deleteProperty(
+    target: object,
+    key: string | symbol,
+  ) {
+    const res = Reflect.deleteProperty(target, key)
+
+    if (res) {
+      trigger(target, TriggerOpTypes.DELETE, key)
+    }
+
+    return res
+  }
 }
 
 export const mutableHandlers: ProxyHandler<object> = new MutableReactiveHandler()
