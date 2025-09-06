@@ -1,6 +1,6 @@
-import { isObject } from '@vue/shared'
+import { hasChanged, hasOwn, isObject } from '@vue/shared'
 import { ReactiveFlags, TrackOpTypes, TriggerOpTypes } from './constants'
-import { track, trigger } from './dep'
+import { ITERATE_KEY, track, trigger } from './dep'
 import { reactive, reactiveMap } from './reactive'
 
 class BaseReactiveHandler implements ProxyHandler<object> {
@@ -46,14 +46,22 @@ class MutableReactiveHandler extends BaseReactiveHandler {
   }
 
   set(
-    target: object,
+    target: Record<string | symbol, unknown>,
     key: string | symbol,
     value: unknown,
     receiver: object,
   ) {
+    const oldVal = target[key]
+    const hadKey = hasOwn(target, key)
+
     const res = Reflect.set(target, key, value, receiver)
 
-    trigger(target, TriggerOpTypes.SET, key)
+    if (!hadKey) {
+      trigger(target, TriggerOpTypes.ADD, key)
+    }
+    else if (hasChanged(value, oldVal)) {
+      trigger(target, TriggerOpTypes.SET, key)
+    }
 
     return res
   }
@@ -78,6 +86,16 @@ class MutableReactiveHandler extends BaseReactiveHandler {
     if (res) {
       trigger(target, TriggerOpTypes.DELETE, key)
     }
+
+    return res
+  }
+
+  ownKeys(
+    target: object,
+  ) {
+    const res = Reflect.ownKeys(target)
+
+    track(target, TrackOpTypes.ITERATE, ITERATE_KEY)
 
     return res
   }

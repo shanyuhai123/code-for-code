@@ -18,6 +18,23 @@ describe('reactivity/effect', () => {
     expect(dummy).toBe(1)
   })
 
+  // 值未改变时不触发
+  it('should not trigger when value is not changed', () => {
+    let dummy
+    const fnSpy = vi.fn()
+    const counter = reactive({ num: 0 })
+    effect(() => {
+      fnSpy()
+      dummy = counter.num
+    })
+
+    expect(dummy).toBe(0)
+    expect(fnSpy).toHaveBeenCalledTimes(1)
+    counter.num = 0
+    expect(dummy).toBe(0)
+    expect(fnSpy).toHaveBeenCalledTimes(1)
+  })
+
   it('should observe multiple properties', () => {
     let dummy
     const counter = reactive({ num1: 0, num2: 0 })
@@ -101,5 +118,17 @@ describe('reactivity/effect', () => {
     expect(dummy).toBe(0)
     counter.num = 2
     expect(dummy).toBe(2)
+  })
+
+  it('should observe object keys', () => {
+    let dummy: string[] | undefined
+    const obj: any = reactive({ foo: 'bar' })
+    effect(() => dummy = Object.keys(obj))
+
+    expect(dummy).toEqual(['foo'])
+    obj.bar = 'baz'
+    expect(dummy).toEqual(['foo', 'bar'])
+    delete obj.foo
+    expect(dummy).toEqual(['bar'])
   })
 })

@@ -1,5 +1,6 @@
-import type { TrackOpTypes, TriggerOpTypes } from './constants'
+import type { TrackOpTypes } from './constants'
 import type { Subscriber } from './effect'
+import { TriggerOpTypes } from './constants'
 import { activeSub, EffectFlags, endBatch, shouldTrack, startBatch } from './effect'
 
 export const ITERATE_KEY: unique symbol = Symbol(__DEV__ ? 'Object iterate' : '')
@@ -150,9 +151,37 @@ export function trigger(
   if (!depsMap)
     return
 
-  const dep = depsMap.get(key)
-  if (!dep)
-    return
+  const run = (dep: Dep) => {
+    dep.trigger()
+  }
 
-  dep.trigger()
+  if (key !== void 0) {
+    const dep = depsMap.get(key)
+
+    if (dep)
+      run(dep)
+  }
+
+  // key 的生成与 type 相关
+  if (type === TriggerOpTypes.ADD) {
+    const dep = depsMap.get(ITERATE_KEY)
+    if (!dep)
+      return
+
+    run(dep)
+  }
+  else if (type === TriggerOpTypes.DELETE) {
+    const dep = depsMap.get(ITERATE_KEY)
+    if (!dep)
+      return
+
+    run(dep)
+  }
+  else {
+    const dep = depsMap.get(key)
+    if (!dep)
+      return
+
+    run(dep)
+  }
 }
