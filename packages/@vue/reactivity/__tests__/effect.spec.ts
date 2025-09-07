@@ -1,5 +1,5 @@
 import { effect } from '../src/effect'
-import { reactive } from '../src/reactive'
+import { reactive, shallowReactive } from '../src/reactive'
 
 describe('reactivity/effect', () => {
   it('should run the passed function once (wrapped by a effect)', () => {
@@ -66,6 +66,16 @@ describe('reactivity/effect', () => {
     expect(dummy).toBe(0)
     counter.nested.num++
     expect(dummy).toBe(1)
+  })
+
+  it('should not observe shallow reactive properties', () => {
+    let dummy
+    const counter = shallowReactive({ nested: { num: 0 } })
+    effect(() => dummy = counter.nested.num)
+
+    expect(dummy).toBe(0)
+    counter.nested.num++
+    expect(dummy).toBe(0)
   })
 
   it('should observe delete operations', () => {

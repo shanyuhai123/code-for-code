@@ -1,6 +1,6 @@
 import type { Ref, UnwrapRefSimple } from './ref'
 import { isObject } from '@vue/shared'
-import { mutableHandlers } from './baseHandlers'
+import { mutableHandlers, readonlyHandlers, shallowReactiveHandlers } from './baseHandlers'
 import { ReactiveFlags } from './constants'
 import { warn } from './warning'
 
@@ -12,6 +12,9 @@ export interface Target {
 }
 
 export const reactiveMap: WeakMap<Target, any> = new WeakMap<Target, any>()
+export const shallowReactiveMap: WeakMap<Target, any> = new WeakMap<Target, any>()
+export const readonlyMap: WeakMap<Target, any> = new WeakMap<Target, any>()
+export const shallowReadonlyMap: WeakMap<Target, any> = new WeakMap<Target, any>()
 
 export type UnwrapNestedRefs<T> = T extends Ref ? T : UnwrapRefSimple<T>
 
@@ -35,6 +38,56 @@ export function reactive(target: object) {
     false,
     mutableHandlers,
     reactiveMap,
+  )
+}
+
+export declare const ShallowReactiveMarker: unique symbol
+
+export type ShallowReactive<T> = T & { [ShallowReactiveMarker]?: true }
+
+export function shallowReactive<T extends object>(
+  target: T,
+): ShallowReactive<T> {
+  return createReactiveObject(
+    target,
+    false,
+    shallowReactiveHandlers,
+    shallowReactiveMap,
+  )
+}
+
+type Primitive = string | number | boolean | bigint | symbol | undefined | null
+export type Builtin = Primitive | Function | Date | Error | RegExp
+export type DeepReadonly<T> = T extends Builtin
+  ? T
+  : T extends Map<infer K, infer V>
+    ? ReadonlyMap<DeepReadonly<K>, DeepReadonly<V>>
+    : T extends ReadonlyMap<infer K, infer V>
+      ? ReadonlyMap<DeepReadonly<K>, DeepReadonly<V>>
+      : T extends WeakMap<infer K, infer V>
+        ? WeakMap<DeepReadonly<K>, DeepReadonly<V>>
+        : T extends Set<infer U>
+          ? ReadonlySet<DeepReadonly<U>>
+          : T extends ReadonlySet<infer U>
+            ? ReadonlySet<DeepReadonly<U>>
+            : T extends WeakSet<infer U>
+              ? WeakSet<DeepReadonly<U>>
+              : T extends Promise<infer U>
+                ? Promise<DeepReadonly<U>>
+                : T extends Ref<infer U, unknown>
+                  ? Readonly<Ref<DeepReadonly<U>>>
+                  : T extends {}
+                    ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+                    : Readonly<T>
+
+export function readonly<T extends object>(
+  target: T,
+): DeepReadonly<UnwrapNestedRefs<T>> {
+  return createReactiveObject(
+    target,
+    true,
+    readonlyHandlers,
+    readonlyMap,
   )
 }
 
@@ -73,9 +126,9 @@ function createReactiveObject(
   return proxy
 }
 
-export declare const ShallowReactiveMarker: unique symbol
-
-export type ShallowReactive<T> = T & { [ShallowReactiveMarker]?: true }
+export function isProxy(value: any): boolean {
+  return value ? !!value[ReactiveFlags.RAW] : false
+}
 
 export function isReactive(value: unknown): boolean {
   if (isReadonly(value)) {

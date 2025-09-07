@@ -1,7 +1,8 @@
 import { hasChanged, hasOwn, isObject } from '@vue/shared'
 import { ReactiveFlags, TrackOpTypes, TriggerOpTypes } from './constants'
 import { ITERATE_KEY, track, trigger } from './dep'
-import { reactive, reactiveMap } from './reactive'
+import { reactive, reactiveMap, readonlyMap, shallowReactiveMap, shallowReadonlyMap } from './reactive'
+import { warn } from './warning'
 
 class BaseReactiveHandler implements ProxyHandler<object> {
   constructor(
@@ -11,6 +12,7 @@ class BaseReactiveHandler implements ProxyHandler<object> {
 
   get(target: object, key: string | symbol, receiver: object): any {
     const isReadonly = this._isReadonly
+    const isShallow = this._isShallow
 
     if (key === ReactiveFlags.IS_REACTIVE) {
       return !isReadonly
@@ -18,8 +20,22 @@ class BaseReactiveHandler implements ProxyHandler<object> {
     else if (key === ReactiveFlags.IS_READONLY) {
       return isReadonly
     }
+    else if (key === ReactiveFlags.IS_SHALLOW) {
+      return isShallow
+    }
     else if (key === ReactiveFlags.RAW) {
-      if (receiver === reactiveMap.get(target)) {
+      if (
+        receiver === (
+          isReadonly
+            ? isShallow
+              ? shallowReadonlyMap
+              : readonlyMap
+            : isShallow
+              ? shallowReactiveMap
+              : reactiveMap
+        ).get(target)
+        || Object.getPrototypeOf(target) === Object.getPrototypeOf(receiver)
+      ) {
         return target
       }
 
@@ -29,6 +45,10 @@ class BaseReactiveHandler implements ProxyHandler<object> {
     const res = Reflect.get(target, key, receiver)
 
     track(target, TrackOpTypes.GET, key)
+
+    if (isShallow) {
+      return res
+    }
 
     if (isObject(res)) {
       return reactive(res)
@@ -101,4 +121,34 @@ class MutableReactiveHandler extends BaseReactiveHandler {
   }
 }
 
+class ReadonlyReactiveHandler extends BaseReactiveHandler {
+  constructor(isShallow = false) {
+    super(true, isShallow)
+  }
+
+  set(target: object, key: string | symbol) {
+    if (__DEV__) {
+      warn(
+        `Set operation on key "${String(key)}" failed: target is readonly.`,
+        target,
+      )
+    }
+    return true
+  }
+
+  deleteProperty(target: object, key: string | symbol) {
+    if (__DEV__) {
+      warn(
+        `Delete operation on key "${String(key)}" failed: target is readonly.`,
+        target,
+      )
+    }
+    return true
+  }
+}
+
 export const mutableHandlers: ProxyHandler<object> = new MutableReactiveHandler()
+
+export const shallowReactiveHandlers = new MutableReactiveHandler(true)
+
+export const readonlyHandlers = new ReadonlyReactiveHandler()
