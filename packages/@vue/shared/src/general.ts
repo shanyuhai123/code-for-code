@@ -30,5 +30,11 @@ export const isSymbol = (val: unknown): val is symbol => typeof val === 'symbol'
 export const isObject = (val: unknown): val is Record<string, any> => val !== null && typeof val === 'object'
 export const isPlainObject = (val: unknown): val is object => toTypeString(val) === '[object Object]'
 
+export const isIntegerKey = (key: unknown): boolean =>
+  isString(key)
+  && key !== 'NaN'
+  && key[0] !== '-'
+  && `${Number.parseInt(key, 10)}` === key
+
 export const hasChanged = (value: any, oldValue: any): boolean =>
   !Object.is(value, oldValue)

@@ -1,9 +1,11 @@
 import type { TrackOpTypes } from './constants'
 import type { Subscriber } from './effect'
+import { isIntegerKey, isSymbol } from '@vue/shared'
 import { TriggerOpTypes } from './constants'
 import { activeSub, EffectFlags, endBatch, shouldTrack, startBatch } from './effect'
 
 export const ITERATE_KEY: unique symbol = Symbol(__DEV__ ? 'Object iterate' : '')
+export const ARRAY_ITERATE_KEY: unique symbol = Symbol(__DEV__ ? 'Array iterate' : '')
 
 export let globalVersion = 0
 
@@ -146,42 +148,60 @@ export function trigger(
   target: object,
   type: TriggerOpTypes,
   key?: unknown,
+  newValue?: unknown,
 ): void {
   const depsMap = targetMap.get(target)
   if (!depsMap)
     return
 
-  const run = (dep: Dep) => {
-    dep.trigger()
+  const run = (dep: Dep | undefined) => {
+    if (dep) {
+      dep.trigger()
+    }
   }
 
-  if (key !== void 0) {
-    const dep = depsMap.get(key)
+  startBatch()
 
-    if (dep)
-      run(dep)
-  }
+  const targetIsArray = Array.isArray(target)
+  const isArrayIndex = targetIsArray && isIntegerKey(key)
 
-  // key 的生成与 type 相关
-  if (type === TriggerOpTypes.ADD) {
-    const dep = depsMap.get(ITERATE_KEY)
-    if (!dep)
-      return
-
-    run(dep)
-  }
-  else if (type === TriggerOpTypes.DELETE) {
-    const dep = depsMap.get(ITERATE_KEY)
-    if (!dep)
-      return
-
-    run(dep)
+  if (targetIsArray && key === 'length') {
+    const newLength = Number(newValue)
+    depsMap.forEach((dep, key) => {
+      if (
+        key === 'length'
+        || key === ARRAY_ITERATE_KEY
+        || (!isSymbol(key) && key >= newLength)
+      ) {
+        run(dep)
+      }
+    })
   }
   else {
-    const dep = depsMap.get(key)
-    if (!dep)
-      return
+    if (key !== void 0 || depsMap.has(void 0)) {
+      run(depsMap.get(key))
+    }
 
-    run(dep)
+    if (isArrayIndex) {
+      run(depsMap.get(ARRAY_ITERATE_KEY)!)
+    }
+
+    switch (type) {
+      case TriggerOpTypes.ADD:
+        if (!targetIsArray) {
+          run(depsMap.get(ITERATE_KEY))
+        }
+        else if (isArrayIndex) {
+          run(depsMap.get('length'))
+        }
+        break
+      case TriggerOpTypes.DELETE:
+        if (!targetIsArray) {
+          run(depsMap.get(ITERATE_KEY))
+        }
+        break
+    }
   }
+
+  endBatch()
 }

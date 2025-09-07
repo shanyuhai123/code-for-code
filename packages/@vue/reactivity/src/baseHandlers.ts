@@ -1,7 +1,8 @@
-import { hasChanged, hasOwn, isObject } from '@vue/shared'
+import { hasChanged, hasOwn, isArray, isObject } from '@vue/shared'
 import { ReactiveFlags, TrackOpTypes, TriggerOpTypes } from './constants'
 import { ITERATE_KEY, track, trigger } from './dep'
 import { reactive, reactiveMap, readonlyMap, shallowReactiveMap, shallowReadonlyMap } from './reactive'
+import { isRef } from './ref'
 import { warn } from './warning'
 
 class BaseReactiveHandler implements ProxyHandler<object> {
@@ -42,9 +43,15 @@ class BaseReactiveHandler implements ProxyHandler<object> {
       return
     }
 
-    const res = Reflect.get(target, key, receiver)
+    const res = Reflect.get(
+      target,
+      key,
+      isRef(target) ? target : receiver,
+    )
 
-    track(target, TrackOpTypes.GET, key)
+    if (!isReadonly) {
+      track(target, TrackOpTypes.GET, key)
+    }
 
     if (isShallow) {
       return res
