@@ -10,6 +10,7 @@ export default antfu({
     'ts/no-unnecessary-type-constraint': 'off',
     'ts/no-this-alias': 'off',
     'ts/no-empty-object-type': 'off',
+    'ts/no-use-before-define': 'off',
     'ts/prefer-literal-enum-member': ['error', { allowBitwiseExpressions: true }],
   },
 })

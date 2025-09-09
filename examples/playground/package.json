@@ -6,7 +6,9 @@
     "dev": "vite"
   },
   "devDependencies": {
-    "vite": "catalog:",
-    "@vue/reactivity": "workspace:*"
+    "@vue/reactivity": "workspace:*",
+    "@vue/runtime-core": "workspace:*",
+    "@vue/runtime-dom": "workspace:*",
+    "vite": "catalog:"
   }
 }
