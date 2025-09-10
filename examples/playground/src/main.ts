@@ -2,6 +2,14 @@ import type { VNode } from '@vue/runtime-core'
 import { effect, reactive } from '@vue/reactivity'
 import { render } from '@vue/runtime-dom'
 
+const style = document.createElement('style')
+document.head.appendChild(style)
+style.innerHTML = `
+  .blue {
+    color: blue;
+  }
+`
+
 // const count = ref(0)
 const obj: any = reactive({
   text: 'Hello',
@@ -9,8 +17,20 @@ const obj: any = reactive({
 })
 const vnode: VNode = {
   type: 'div',
-  children: 'Hello',
-  el: null,
+  props: {
+    id: 'hello',
+    class: 'blue',
+  },
+  children: [
+    {
+      type: 'span',
+      children: 'Hello',
+    },
+    {
+      type: 'span',
+      children: 'World',
+    },
+  ],
 }
 
 effect(() => {
