@@ -1,5 +1,5 @@
 import type { RendererOptions } from '@vue/runtime-core'
-import { patchAttr } from './modules/attrs'
+import { patchDOMProp } from './modules/props'
 
 type DOMRendererOptions = RendererOptions<Node, Element>
 
@@ -9,5 +9,6 @@ export const patchProp: DOMRendererOptions['patchProp'] = (
   prevValue,
   nextValue,
 ) => {
-  patchAttr(el, key, nextValue)
+  patchDOMProp(el, key, nextValue)
+  // patchAttr(el, key, nextValue)
 }

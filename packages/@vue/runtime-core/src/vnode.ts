@@ -31,7 +31,7 @@ export interface VNode<
 > {
   type: VNodeTypes
   props?: (VNodeProps & ExtraProps) | null
-  children: VNodeNormalizedChildren
+  children?: VNodeNormalizedChildren
 
   // DOM
   el?: HostNode | null

@@ -23,12 +23,22 @@ const vnode: VNode = {
   },
   children: [
     {
-      type: 'span',
-      children: 'Hello',
+      type: 'input',
+      props: {
+        id: 'my-input1',
+        type: 'text',
+        disabled: true,
+        value: 'foo',
+      },
     },
     {
-      type: 'span',
-      children: 'World',
+      type: 'input',
+      props: {
+        id: 'my-input2',
+        type: 'text',
+        disabled: false,
+        value: 'foo',
+      },
     },
   ],
 }
