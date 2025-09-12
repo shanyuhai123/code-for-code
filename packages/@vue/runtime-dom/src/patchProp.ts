@@ -1,4 +1,6 @@
 import type { RendererOptions } from '@vue/runtime-core'
+import { patchAttr } from './modules/attrs'
+import { patchClass } from './modules/class'
 import { patchDOMProp } from './modules/props'
 
 type DOMRendererOptions = RendererOptions<Node, Element>
@@ -9,6 +11,21 @@ export const patchProp: DOMRendererOptions['patchProp'] = (
   prevValue,
   nextValue,
 ) => {
-  patchDOMProp(el, key, nextValue)
-  // patchAttr(el, key, nextValue)
+  if (key === 'class') {
+    patchClass(el, nextValue)
+  }
+  else if (shouldSetAsProp(el, key)) {
+    patchDOMProp(el, key, nextValue)
+  }
+  else {
+    patchAttr(el, key, nextValue)
+  }
+}
+
+function shouldSetAsProp(el: Element, key: string) {
+  if (key === 'form') {
+    return false
+  }
+
+  return key in el
 }

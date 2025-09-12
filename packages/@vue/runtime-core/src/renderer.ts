@@ -1,5 +1,6 @@
 import type { VNode } from './vnode'
 import { isArray } from '@vue/shared'
+import { isSameVNodeType } from './vnode'
 
 export type ElementNamespace = 'svg' | 'mathml' | undefined
 
@@ -64,6 +65,15 @@ function baseCreateRenderer(options: RendererOptions) {
     n2: VNode,
     container: RendererElement,
   ) => {
+    if (n1 === n2) {
+      return
+    }
+
+    if (n1 && !isSameVNodeType(n1, n2)) {
+      umount(n1)
+      n1 = null
+    }
+
     if (n1 === null) {
       mountElement(n2, container)
     }
