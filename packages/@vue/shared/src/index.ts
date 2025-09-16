@@ -1,3 +1,5 @@
 export * from './domAttrConfig'
 export * from './general'
 export { makeMap } from './makeMap'
+export * from './patchFlags'
+export * from './shapeFlags'

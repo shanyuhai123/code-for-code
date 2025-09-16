@@ -12,7 +12,12 @@ export {
 } from './reactive'
 
 export {
+  isRef,
   ref,
+} from './ref'
+
+export type {
+  Ref,
 } from './ref'
 
 export {

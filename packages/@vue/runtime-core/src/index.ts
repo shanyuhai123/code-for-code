@@ -1,9 +1,12 @@
+export { h } from './h'
+
 export type {
   Renderer,
   RendererElement,
   RendererOptions,
   RootRenderFunction,
 } from './renderer'
+
 export {
   createRenderer,
 } from './renderer'

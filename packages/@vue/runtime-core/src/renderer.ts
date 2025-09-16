@@ -1,6 +1,7 @@
 import type { VNode } from './vnode'
-import { isArray } from '@vue/shared'
-import { isSameVNodeType } from './vnode'
+import { isArray, ShapeFlags } from '@vue/shared'
+import { Comment, isSameVNodeType, Text } from './vnode'
+import { warn } from './warning'
 
 export type ElementNamespace = 'svg' | 'mathml' | undefined
 
@@ -20,10 +21,13 @@ export interface RendererOptions<
   ) => void
   insert: (el: HostNode, parent: HostElement, anchor?: HostNode | null) => void
   remove: (el: HostNode) => void
+  createComment: (text: string) => HostNode
+  createText: (text: string) => HostNode
   createElement: (
     type: string,
     namespace?: ElementNamespace
   ) => HostElement
+  setText: (node: HostNode, text: string) => void
   setElementText: (el: HostNode, text: string) => void
 }
 
@@ -36,6 +40,13 @@ export interface RendererElement extends RendererNode, HTMLElement {}
 export type RootRenderFunction<HostElement = RendererElement> = (
   vnode: VNode | null,
   container: HostElement,
+) => void
+
+type ProcessTextOrCommentFn = (
+  n1: VNode | null,
+  n2: VNode,
+  container: RendererElement,
+  anchor: RendererNode | null,
 ) => void
 
 export function createRenderer<
@@ -56,7 +67,10 @@ function baseCreateRenderer(options: RendererOptions) {
     patchProp: hostPatchProp,
     insert: hostInsert,
     remove: hostRemove,
+    createComment: hostCreateComment,
+    createText: hostCreateText,
     createElement: hostCreateElement,
+    setText: hostSetText,
     setElementText: hostSetElementText,
   } = options
 
@@ -64,6 +78,7 @@ function baseCreateRenderer(options: RendererOptions) {
     n1: VNode | null,
     n2: VNode,
     container: RendererElement,
+    anchor = null,
   ) => {
     if (n1 === n2) {
       return
@@ -74,12 +89,70 @@ function baseCreateRenderer(options: RendererOptions) {
       n1 = null
     }
 
-    if (n1 === null) {
-      mountElement(n2, container)
+    const { type, shapeFlag } = n2
+    switch (type) {
+      case Text:
+        processText(n1, n2, container, anchor)
+        break
+      case Comment:
+        processCommentNode(n1, n2, container, anchor)
+        break
+      default:
+        if (shapeFlag & ShapeFlags.ELEMENT) {
+          processElement(n1, n2, container, anchor)
+        }
+        else if (__DEV__) {
+          warn('Invalid VNode type:', type, `(${typeof type})`)
+        }
     }
   }
 
-  const mountElement = (vnode: VNode, container: RendererElement) => {
+  const processText: ProcessTextOrCommentFn = (n1, n2, container, anchor) => {
+    if (n1 === null) {
+      hostInsert(
+        n2.el = hostCreateText(n2.children as string),
+        container,
+        anchor,
+      )
+    }
+    else {
+      const el = (n2.el = n1.el!)
+      if (n2.children !== n1.children) {
+        hostSetText(el, n2.children as string)
+      }
+    }
+  }
+
+  const processCommentNode: ProcessTextOrCommentFn = (
+    n1,
+    n2,
+    container,
+    anchor,
+  ) => {
+    if (n1 == null) {
+      hostInsert(
+        (n2.el = hostCreateComment((n2.children as string) || '')),
+        container,
+        anchor,
+      )
+    }
+    else {
+      n2.el = n1.el
+    }
+  }
+
+  const processElement = (
+    n1: VNode | null,
+    n2: VNode,
+    container: RendererElement,
+    anchor: RendererNode | null,
+  ) => {
+    if (n1 === null) {
+      mountElement(n2, container, anchor)
+    }
+  }
+
+  const mountElement = (vnode: VNode, container: RendererElement, anchor: RendererNode | null) => {
     const el = vnode.el = hostCreateElement(vnode.type as string)
 
     if (typeof vnode.children === 'string') {
@@ -97,7 +170,7 @@ function baseCreateRenderer(options: RendererOptions) {
       }
     }
 
-    hostInsert(el, container)
+    hostInsert(el, container, anchor)
   }
 
   const umount = (vnode: VNode) => {

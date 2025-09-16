@@ -12,6 +12,12 @@ export const nodeOps: Omit<RendererOptions<Node, Element>, 'patchProp'> = {
   remove: (el) => {
     (el as Node).parentNode?.removeChild(el as Node)
   },
+  createComment: (text) => {
+    return doc.createComment(text)
+  },
+  createText: (text) => {
+    return doc.createTextNode(text)
+  },
   createElement: (tag, namespace) => {
     const el = namespace === 'svg'
       ? doc.createElementNS(svgNS, tag)
@@ -20,6 +26,9 @@ export const nodeOps: Omit<RendererOptions<Node, Element>, 'patchProp'> = {
         : doc.createElement(tag)
 
     return el as RendererElement
+  },
+  setText: (el, text) => {
+    el.nodeValue = text
   },
   setElementText: (el, text) => {
     el.textContent = text
