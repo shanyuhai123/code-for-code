@@ -28,6 +28,11 @@ const vnode = h('div', [
     disabled: false,
     value: 'foo',
   }),
+  h('button', {
+    onClick: () => {
+      alert('Clicked')
+    },
+  }, 'Click me'),
 ])
 
 effect(() => {

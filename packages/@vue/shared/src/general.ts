@@ -10,6 +10,15 @@ export const NOOP = (): void => {}
 
 export const NO = () => false
 
+export const isOn = (key: string): boolean =>
+  key.charCodeAt(0) === 111 /* o */
+  && key.charCodeAt(1) === 110 /* n */
+  // uppercase letter
+  && (key.charCodeAt(2) > 122 || key.charCodeAt(2) < 97)
+
+export const isModelListener = (key: string): key is `onUpdate:${string}` =>
+  key.startsWith('onUpdate:')
+
 export const extend: typeof Object.assign = Object.assign
 
 const hasOwnProperty = Object.prototype.hasOwnProperty
@@ -38,3 +47,16 @@ export const isIntegerKey = (key: unknown): boolean =>
 
 export const hasChanged = (value: any, oldValue: any): boolean =>
   !Object.is(value, oldValue)
+
+const cacheStringFunction = <T extends (str: string) => string>(fn: T): T => {
+  const cache: Record<string, string> = Object.create(null)
+  return ((str: string) => {
+    const hit = cache[str]
+    return hit || (cache[str] = fn(str))
+  }) as T
+}
+
+const hyphenateRE = /\B([A-Z])/g
+export const hyphenate: (str: string) => string = cacheStringFunction(
+  (str: string) => str.replace(hyphenateRE, '-$1').toLowerCase(),
+)
