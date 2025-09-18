@@ -6,7 +6,6 @@
   "scripts": {
     "new": "sh scripts/new-package.sh",
     "dev": "cd examples/playground && vite",
-    "dev:react-admin": "cd examples/react-admin && vite",
     "test": "vitest",
     "test:coverage": "vitest --coverage"
   },
