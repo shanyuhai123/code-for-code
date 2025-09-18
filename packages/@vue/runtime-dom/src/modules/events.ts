@@ -57,8 +57,19 @@ function parseName(name: string) {
   return [hyphenate(name.slice(2))]
 }
 
+let cachedNow: number = 0
+const p = Promise.resolve()
+const getNow = () => cachedNow || (p.then(() => (cachedNow = 0)), (cachedNow = Date.now()))
+
 function createInvoker(value: EventValue): Invoker {
-  const invoker = ((e: Event) => {
+  const invoker = ((e: Event & { _vts?: number }) => {
+    if (!e._vts) {
+      e._vts = Date.now()
+    }
+    else if (e._vts <= invoker.attached) {
+      return
+    }
+
     const { value } = invoker
     if (Array.isArray(value)) {
       for (const handler of value) {
@@ -71,7 +82,7 @@ function createInvoker(value: EventValue): Invoker {
   }) as Invoker
 
   invoker.value = value
-  invoker.attached = Date.now()
+  invoker.attached = getNow()
 
   return invoker
 }
