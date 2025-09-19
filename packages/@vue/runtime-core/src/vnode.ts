@@ -3,7 +3,7 @@ import type { ComponentInternalInstance } from './component'
 import type { RawSlots } from './componentSlots'
 import type { RendererNode } from './renderer'
 import { isRef } from '@vue/reactivity'
-import { isFunction, isString, ShapeFlags } from '@vue/shared'
+import { isArray, isFunction, isString, ShapeFlags } from '@vue/shared'
 import { currentRenderingInstance, currentScopeId } from './componentRenderContext'
 
 export const Text: unique symbol = Symbol.for('v-txt')
@@ -124,7 +124,25 @@ function _createVNode(
     patchFlag,
     dynamicProps,
     shapeFlag,
+    true,
   )
+}
+
+function normalizeChildren(vnode: VNode, children: unknown) {
+  if (isArray(children)) {
+    vnode.children = children.map(
+      child => typeof child === 'string'
+        ? createTextVNode(child)
+        : child,
+    )
+  }
+  else {
+    vnode.children = children as VNodeNormalizedChildren
+  }
+}
+
+export function createTextVNode(text: string = ' ', flag: number = 0): VNode {
+  return createVNode(Text, null, text, flag)
 }
 
 function createBaseVNode(
@@ -134,6 +152,7 @@ function createBaseVNode(
   patchFlag = 0,
   dynamicProps: string[] | null = null,
   shapeFlag: number = ShapeFlags.ELEMENT,
+  needFullChildrenNormalization = false,
 ) {
   const vnode = {
     __v_isVNode: true,
@@ -164,6 +183,10 @@ function createBaseVNode(
     appContext: null,
     ctx: currentRenderingInstance,
   } as VNode
+
+  if (needFullChildrenNormalization) {
+    normalizeChildren(vnode, children)
+  }
 
   return vnode
 }

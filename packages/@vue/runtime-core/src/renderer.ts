@@ -1,6 +1,6 @@
 import type { ComponentInternalInstance, Data } from './component'
-import type { VNode } from './vnode'
-import { EMPTY_OBJ, isArray, ShapeFlags } from '@vue/shared'
+import type { VNode, VNodeArrayChildren } from './vnode'
+import { EMPTY_ARR, EMPTY_OBJ, isArray, ShapeFlags } from '@vue/shared'
 import { Comment, isSameVNodeType, Text } from './vnode'
 import { warn } from './warning'
 
@@ -196,6 +196,8 @@ function baseCreateRenderer(options: RendererOptions) {
     const newProps = n2.props || EMPTY_OBJ
 
     patchProps(el, oldProps, newProps, parentComponent)
+
+    patchChildren(n1, n2, el)
   }
 
   const patchProps = (
@@ -219,6 +221,63 @@ function baseCreateRenderer(options: RendererOptions) {
       if (next !== prev) {
         hostPatchProp(el, key, prev, next, parentComponent)
       }
+    }
+  }
+
+  const patchChildren = (
+    n1: VNode | null,
+    n2: VNode,
+    container: RendererElement,
+  ) => {
+    const c1 = n1 && n1.children
+    const c2 = n2.children
+
+    patchUnkeyedChildren(c1 as VNode[], c2 as VNodeArrayChildren, container)
+  }
+
+  const patchUnkeyedChildren = (
+    c1: VNode[],
+    c2: VNodeArrayChildren,
+    container: RendererElement,
+  ) => {
+    c1 = c1 || EMPTY_ARR
+    c2 = c2 || EMPTY_ARR
+
+    const oldLength = c1.length
+    const newLength = c2.length
+    const commonLength = Math.min(oldLength, newLength)
+
+    let i
+    for (i = 0; i < commonLength; i++) {
+      patch(c1[i], c2[i] as VNode, container)
+    }
+
+    if (oldLength > newLength) {
+      unmountChildren(c1, commonLength)
+    }
+    else {
+      mountChildren(c2, container, commonLength)
+    }
+  }
+
+  const unmountChildren = (
+    children: VNode[],
+    start = 0,
+    end = children.length,
+  ) => {
+    for (let i = start; i < end; i++) {
+      umount(children[i])
+    }
+  }
+
+  const mountChildren = (
+    children: VNodeArrayChildren,
+    container: RendererElement,
+    start = 0,
+    end = children.length,
+  ) => {
+    for (let i = start; i < end; i++) {
+      patch(null, children[i] as VNode, container)
     }
   }
 

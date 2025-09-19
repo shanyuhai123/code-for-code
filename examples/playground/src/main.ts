@@ -1,4 +1,4 @@
-import { effect, reactive } from '@vue/reactivity'
+import { effect, reactive, ref } from '@vue/reactivity'
 import { h } from '@vue/runtime-core'
 import { render } from '@vue/runtime-dom'
 
@@ -10,35 +10,17 @@ style.innerHTML = `
   }
 `
 
-// const count = ref(0)
-const obj: any = reactive({
-  text: 'Hello',
-  num: 123,
-})
-const vnode = h('div', [
-  h('input', {
-    id: 'my-input1',
-    type: 'text',
-    disabled: true,
-    value: 'foo',
-  }),
-  h('input', {
-    id: 'my-input2',
-    type: 'text',
-    disabled: false,
-    value: 'foo',
-  }),
-  h('button', {
-    onClick: () => {
-      alert('Clicked')
-    },
-  }, 'Click me'),
-])
+const bool = ref(true)
 
 effect(() => {
+  const vnode = h('div', [
+    h('button', {
+      onClick: () => {
+        bool.value = !bool.value
+      },
+    }, 'Click me'),
+    bool.value ? 'Hello' : 'World',
+  ])
+
   render(vnode, document.getElementById('app')!)
 })
-
-setTimeout(() => {
-  obj.text = 'Hello World'
-}, 1000)
