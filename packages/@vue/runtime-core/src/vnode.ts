@@ -6,12 +6,19 @@ import { isRef } from '@vue/reactivity'
 import { isArray, isFunction, isString, ShapeFlags } from '@vue/shared'
 import { currentRenderingInstance, currentScopeId } from './componentRenderContext'
 
+export const Fragment = Symbol.for('v-fgt') as any as {
+  __isFragment: true
+  new (): {
+    $props: VNodeProps
+  }
+}
 export const Text: unique symbol = Symbol.for('v-txt')
 export const Comment: unique symbol = Symbol.for('v-cmt')
 
 export type VNodeTypes
   = | string
     | VNode
+    | typeof Fragment
     | typeof Text
     | typeof Comment
 
@@ -48,6 +55,8 @@ type VNodeChildAtom
 
 export type VNodeArrayChildren = Array<VNodeArrayChildren | VNodeChildAtom>
 
+export type VNodeChild = VNodeChildAtom | VNodeArrayChildren
+
 export type VNodeNormalizedChildren
   = | string
     | VNodeArrayChildren
@@ -70,6 +79,7 @@ export interface VNode<
   // optimization only
   shapeFlag: number
   patchFlag: number
+  dynamicChildren?: (VNode[] & { hasOnce?: boolean }) | null
 }
 
 export function isVNode(value: any): value is VNode {
@@ -128,17 +138,39 @@ function _createVNode(
   )
 }
 
-function normalizeChildren(vnode: VNode, children: unknown) {
-  if (isArray(children)) {
-    vnode.children = children.map(
-      child => typeof child === 'string'
-        ? createTextVNode(child)
-        : child,
+export function normalizeVNode(child: VNodeChild): VNode {
+  if (child === null || typeof child === 'boolean') {
+    return createVNode(Comment)
+  }
+  else if (isArray(child)) {
+    return createVNode(
+      Fragment,
+      null,
+      child.slice(),
     )
   }
-  else {
-    vnode.children = children as VNodeNormalizedChildren
+  else if (isVNode(child)) {
+    // TODO clone
+    return child
   }
+  else {
+    return createVNode(Text, null, String(child))
+  }
+}
+
+function normalizeChildren(vnode: VNode, children: unknown) {
+  let type = 0
+
+  if (isArray(children)) {
+    type = ShapeFlags.ARRAY_CHILDREN
+  }
+  else {
+    children = String(children)
+    type = ShapeFlags.TEXT_CHILDREN
+  }
+
+  vnode.children = children as VNodeNormalizedChildren
+  vnode.shapeFlag |= type
 }
 
 export function createTextVNode(text: string = ' ', flag: number = 0): VNode {
@@ -186,6 +218,11 @@ function createBaseVNode(
 
   if (needFullChildrenNormalization) {
     normalizeChildren(vnode, children)
+  }
+  else if (children) {
+    vnode.shapeFlag |= isString(children)
+      ? ShapeFlags.TEXT_CHILDREN
+      : ShapeFlags.ARRAY_CHILDREN
   }
 
   return vnode

@@ -1,7 +1,7 @@
 import type { ComponentInternalInstance, Data } from './component'
 import type { VNode, VNodeArrayChildren } from './vnode'
 import { EMPTY_ARR, EMPTY_OBJ, isArray, ShapeFlags } from '@vue/shared'
-import { Comment, isSameVNodeType, Text } from './vnode'
+import { Comment, isSameVNodeType, normalizeVNode, Text } from './vnode'
 import { warn } from './warning'
 
 export type ElementNamespace = 'svg' | 'mathml' | undefined
@@ -165,15 +165,14 @@ function baseCreateRenderer(options: RendererOptions) {
     anchor: RendererNode | null,
     parentComponent: ComponentInternalInstance | null,
   ) => {
-    const el = vnode.el = hostCreateElement(vnode.type as string)
+    const { type, shapeFlag } = vnode
+    const el = vnode.el = hostCreateElement(type as string)
 
-    if (typeof vnode.children === 'string') {
-      hostSetElementText(el, vnode.children)
+    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      hostSetElementText(el, vnode.children as string)
     }
-    else if (isArray(vnode.children)) {
-      vnode.children.forEach((child) => {
-        patch(null, child as VNode, el)
-      })
+    else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+      mountChildren(vnode.children as VNode[], el)
     }
 
     if (vnode.props) {
@@ -230,9 +229,48 @@ function baseCreateRenderer(options: RendererOptions) {
     container: RendererElement,
   ) => {
     const c1 = n1 && n1.children
+    const prevShapeFlag = n1 ? n1.shapeFlag : 0
     const c2 = n2.children
 
-    patchUnkeyedChildren(c1 as VNode[], c2 as VNodeArrayChildren, container)
+    const { patchFlag, shapeFlag } = n2
+    if (patchFlag > 0) {
+      patchUnkeyedChildren(c1 as VNode[], c2 as VNodeArrayChildren, container)
+    }
+
+    // n2 children has 3 possibilities: text, array, or no children
+    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      // n1 children is array
+      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        unmountChildren(c1 as VNode[])
+      }
+      if (c2 !== c1) {
+        hostSetElementText(container, c2 as string)
+      }
+    }
+    else {
+      if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        // array and array
+        if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          patchKeyedChildren(
+            c1 as VNode[],
+            c2 as VNodeArrayChildren,
+            container,
+          )
+        }
+        else {
+          unmountChildren(c1 as VNode[])
+        }
+      }
+      else {
+        if (prevShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+          hostSetElementText(container, '')
+        }
+
+        if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          mountChildren(c2 as VNode[], container)
+        }
+      }
+    }
   }
 
   const patchUnkeyedChildren = (
@@ -249,7 +287,8 @@ function baseCreateRenderer(options: RendererOptions) {
 
     let i
     for (i = 0; i < commonLength; i++) {
-      patch(c1[i], c2[i] as VNode, container)
+      const nextChild = (c2[i] = normalizeVNode(c2[i]))
+      patch(c1[i], nextChild, container)
     }
 
     if (oldLength > newLength) {
@@ -257,6 +296,75 @@ function baseCreateRenderer(options: RendererOptions) {
     }
     else {
       mountChildren(c2, container, commonLength)
+    }
+  }
+
+  const patchKeyedChildren = (
+    c1: VNode[],
+    c2: VNodeArrayChildren,
+    container: RendererElement,
+  ) => {
+    let i = 0
+    const l2 = c2.length
+    let e1 = c1.length - 1
+    let e2 = l2 - 1
+
+    // sync from start
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[i]
+      const n2 = (c2[i] = normalizeVNode(c2[i]))
+
+      if (isSameVNodeType(n1, n2)) {
+        patch(n1, n2, container)
+      }
+      else {
+        break
+      }
+
+      i++
+    }
+
+    // sync from end
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[e1]
+      const n2 = (c2[e2] = normalizeVNode(c2[e2]))
+
+      if (isSameVNodeType(n1, n2)) {
+        patch(n1, n2, container)
+      }
+      else {
+        break
+      }
+
+      e1--
+      e2--
+    }
+
+    // common sequence + mount
+    if (i > e1) {
+      if (i <= e2) {
+        while (i <= e2) {
+          patch(null, c2[i] = normalizeVNode(c2[i]), container)
+          i++
+        }
+      }
+    }
+    // common sequence + unmount
+    else if (i > e2) {
+      while (i <= e1) {
+        umount(c1[i])
+        i++
+      }
+    }
+    // unknown sequence
+    else {
+      // forced unmount and mount
+      for (let idx = i; idx <= e1; idx++) {
+        umount(c1[idx])
+      }
+      for (let idx = i; idx <= e2; idx++) {
+        patch(null, c2[idx] = normalizeVNode(c2[idx]), container)
+      }
     }
   }
 
@@ -277,7 +385,8 @@ function baseCreateRenderer(options: RendererOptions) {
     end = children.length,
   ) => {
     for (let i = start; i < end; i++) {
-      patch(null, children[i] as VNode, container)
+      const child = (children[i] = normalizeVNode(children[i]))
+      patch(null, child, container)
     }
   }
 
