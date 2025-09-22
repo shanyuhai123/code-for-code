@@ -48,6 +48,20 @@ export const isIntegerKey = (key: unknown): boolean =>
 export const hasChanged = (value: any, oldValue: any): boolean =>
   !Object.is(value, oldValue)
 
+export const def = (
+  obj: object,
+  key: string | symbol,
+  value: any,
+  writable = false,
+): void => {
+  Object.defineProperty(obj, key, {
+    configurable: true,
+    enumerable: false,
+    writable,
+    value,
+  })
+}
+
 const cacheStringFunction = <T extends (str: string) => string>(fn: T): T => {
   const cache: Record<string, string> = Object.create(null)
   return ((str: string) => {

@@ -8,6 +8,7 @@ export {
 } from './effect'
 
 export {
+  markRaw,
   reactive,
 } from './reactive'
 

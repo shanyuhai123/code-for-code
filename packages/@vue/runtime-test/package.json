@@ -1,5 +1,5 @@
 {
-  "name": "@vue/runtime-core",
+  "name": "@vue/runtime-test",
   "version": "1.0.0",
   "private": true,
   "packageManager": "pnpm@10.14.0",
@@ -11,6 +11,6 @@
   "dependencies": {
     "@vue/shared": "workspace:*",
     "@vue/reactivity": "workspace:*",
-    "@vue/runtime-test": "workspace:*"
+    "@vue/runtime-core": "workspace:*"
   }
 }

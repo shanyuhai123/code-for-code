@@ -24,7 +24,7 @@ h(Component, null, {})
 **/
 
 import type { RawSlots } from './componentSlots'
-import type { VNode, VNodeArrayChildren, VNodeProps } from './vnode'
+import type { Fragment, VNode, VNodeArrayChildren, VNodeProps } from './vnode'
 import { isArray, isObject } from '@vue/shared'
 import { createVNode, isVNode } from './vnode'
 
@@ -80,6 +80,13 @@ export function h(
   type: typeof Text | typeof Comment,
   props?: null,
   children?: string | number | boolean,
+): VNode
+// fragment
+export function h(type: typeof Fragment, children?: VNodeArrayChildren): VNode
+export function h(
+  type: typeof Fragment,
+  props?: RawProps | null,
+  children?: VNodeArrayChildren,
 ): VNode
 
 // Actual implementation

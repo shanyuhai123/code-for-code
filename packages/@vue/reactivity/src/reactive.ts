@@ -1,5 +1,5 @@
-import type { Ref, UnwrapRefSimple } from './ref'
-import { isObject } from '@vue/shared'
+import type { RawSymbol, Ref, UnwrapRefSimple } from './ref'
+import { def, hasOwn, isObject } from '@vue/shared'
 import { mutableHandlers, readonlyHandlers, shallowReactiveHandlers } from './baseHandlers'
 import { ReactiveFlags } from './constants'
 import { warn } from './warning'
@@ -144,6 +144,15 @@ export function isReadonly(value: unknown): boolean {
 export function toRaw<T>(observed: T): T {
   const raw = observed && (observed as Target)[ReactiveFlags.RAW]
   return raw ? toRaw(raw) : observed
+}
+
+export type Raw<T> = T & { [RawSymbol]?: true }
+
+export function markRaw<T extends object>(value: T): Raw<T> {
+  if (!hasOwn(value, ReactiveFlags.SKIP) && Object.isExtensible(value)) {
+    def(value, ReactiveFlags.SKIP, true)
+  }
+  return value
 }
 
 export function toReactive<T extends unknown>(value: T) {
