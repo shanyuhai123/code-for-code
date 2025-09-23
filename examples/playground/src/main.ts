@@ -1,5 +1,5 @@
 import { effect, reactive, ref } from '@vue/reactivity'
-import { h } from '@vue/runtime-core'
+import { Fragment, h } from '@vue/runtime-core'
 import { render } from '@vue/runtime-dom'
 
 const style = document.createElement('style')
@@ -20,6 +20,12 @@ effect(() => {
       },
     }, 'Click me'),
     bool.value ? 'Hello' : 'World',
+    h(Fragment, bool.value
+      ? [
+          'Hello',
+          'World',
+        ]
+      : []),
   ])
 
   render(vnode, document.getElementById('app')!)

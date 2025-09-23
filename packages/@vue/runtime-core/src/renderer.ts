@@ -1,7 +1,7 @@
 import type { ComponentInternalInstance, Data } from './component'
 import type { VNode, VNodeArrayChildren } from './vnode'
 import { EMPTY_ARR, EMPTY_OBJ, isArray, ShapeFlags } from '@vue/shared'
-import { Comment, isSameVNodeType, normalizeVNode, Text } from './vnode'
+import { Comment, Fragment, isSameVNodeType, normalizeVNode, Text } from './vnode'
 import { warn } from './warning'
 
 export type ElementNamespace = 'svg' | 'mathml' | undefined
@@ -23,14 +23,11 @@ export interface RendererOptions<
   ) => void
   insert: (el: HostNode, parent: HostElement, anchor?: HostNode | null) => void
   remove: (el: HostNode) => void
-  createComment: (text: string) => HostNode
+  createElement: (type: string) => HostElement
   createText: (text: string) => HostNode
-  createElement: (
-    type: string,
-    namespace?: ElementNamespace
-  ) => HostElement
-  setText: (node: HostNode, text: string) => void
+  createComment: (text: string) => HostNode
   setElementText: (el: HostNode, text: string) => void
+  setText: (node: HostNode, text: string) => void
 }
 
 export interface RendererNode {
@@ -99,6 +96,9 @@ function baseCreateRenderer(options: RendererOptions) {
         break
       case Comment:
         processCommentNode(n1, n2, container, anchor)
+        break
+      case Fragment:
+        processFragment(n1, n2, container, anchor)
         break
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
@@ -220,6 +220,28 @@ function baseCreateRenderer(options: RendererOptions) {
       if (next !== prev) {
         hostPatchProp(el, key, prev, next, parentComponent)
       }
+    }
+  }
+
+  const processFragment = (
+    n1: VNode | null,
+    n2: VNode,
+    container: RendererElement,
+    anchor: RendererNode | null,
+  ) => {
+    const fragmentStartAnchor = (n2.el = n1 ? n1.el : hostCreateText(''))!
+    const fragmentEndAnchor = (n2.anchor = n1 ? n1.anchor : hostCreateText(''))!
+
+    if (n1 === null) {
+      hostInsert(fragmentStartAnchor, container, anchor)
+      hostInsert(fragmentEndAnchor, container, anchor)
+      mountChildren(
+        (n2.children || []) as VNodeArrayChildren,
+        container,
+      )
+    }
+    else {
+      patchChildren(n1, n2, container)
     }
   }
 

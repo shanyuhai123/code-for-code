@@ -68,18 +68,19 @@ export interface VNode<
 > {
   __v_isVNode?: true
 
-  key?: PropertyKey | null
+  key: PropertyKey | null
   type: VNodeTypes
-  props?: (VNodeProps & ExtraProps) | null
-  children?: VNodeNormalizedChildren
+  props: (VNodeProps & ExtraProps) | null
+  children: VNodeNormalizedChildren
 
   // DOM
-  el?: HostNode | null
+  el: HostNode | null
+  anchor: HostNode | null
 
   // optimization only
   shapeFlag: number
   patchFlag: number
-  dynamicChildren?: (VNode[] & { hasOnce?: boolean }) | null
+  dynamicChildren: (VNode[] & { hasOnce?: boolean }) | null
 }
 
 export function isVNode(value: any): value is VNode {
