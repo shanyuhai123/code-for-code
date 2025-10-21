@@ -163,7 +163,10 @@ export function normalizeVNode(child: VNodeChild): VNode {
 function normalizeChildren(vnode: VNode, children: unknown) {
   let type = 0
 
-  if (isArray(children)) {
+  if (children == null) {
+    children = null
+  }
+  else if (isArray(children)) {
     type = ShapeFlags.ARRAY_CHILDREN
   }
   else {
