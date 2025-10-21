@@ -75,6 +75,7 @@ export interface VNode<
 
   // DOM
   el: HostNode | null
+  placeholder: HostNode | null
   anchor: HostNode | null
 
   // optimization only
@@ -204,6 +205,7 @@ function createBaseVNode(
     dirs: null,
     transition: null,
     el: null,
+    placeholder: null,
     anchor: null,
     target: null,
     targetStart: null,

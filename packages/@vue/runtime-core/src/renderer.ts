@@ -1,6 +1,6 @@
 import type { ComponentInternalInstance, Data } from './component'
 import type { VNode, VNodeArrayChildren } from './vnode'
-import { EMPTY_ARR, EMPTY_OBJ, isArray, ShapeFlags } from '@vue/shared'
+import { EMPTY_ARR, EMPTY_OBJ, ShapeFlags } from '@vue/shared'
 import { Comment, Fragment, isSameVNodeType, normalizeVNode, Text } from './vnode'
 import { warn } from './warning'
 
@@ -41,12 +41,33 @@ export type RootRenderFunction<HostElement = RendererElement> = (
   container: HostElement,
 ) => void
 
+type PatchFn = (
+  n1: VNode | null,
+  n2: VNode,
+  container: RendererElement,
+  anchor?: RendererNode | null,
+  parentComponent?: ComponentInternalInstance | null,
+) => void
+
+type MoveFn = (
+  vnode: VNode,
+  container: RendererElement,
+  anchor: RendererNode | null,
+  type: MoveType,
+) => void
+
 type ProcessTextOrCommentFn = (
   n1: VNode | null,
   n2: VNode,
   container: RendererElement,
   anchor: RendererNode | null,
 ) => void
+
+export enum MoveType {
+  ENTER,
+  LEAVE,
+  REORDER,
+}
 
 export function createRenderer<
   HostNode = RendererNode,
@@ -73,10 +94,10 @@ function baseCreateRenderer(options: RendererOptions) {
     setElementText: hostSetElementText,
   } = options
 
-  const patch = (
-    n1: VNode | null,
-    n2: VNode,
-    container: RendererElement,
+  const patch: PatchFn = (
+    n1,
+    n2,
+    container,
     anchor = null,
     parentComponent = null,
   ) => {
@@ -98,7 +119,7 @@ function baseCreateRenderer(options: RendererOptions) {
         processCommentNode(n1, n2, container, anchor)
         break
       case Fragment:
-        processFragment(n1, n2, container, anchor)
+        processFragment(n1, n2, container, anchor, parentComponent)
         break
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
@@ -196,7 +217,7 @@ function baseCreateRenderer(options: RendererOptions) {
 
     patchProps(el, oldProps, newProps, parentComponent)
 
-    patchChildren(n1, n2, el)
+    patchChildren(n1, n2, el, parentComponent)
   }
 
   const patchProps = (
@@ -228,6 +249,7 @@ function baseCreateRenderer(options: RendererOptions) {
     n2: VNode,
     container: RendererElement,
     anchor: RendererNode | null,
+    parentComponent: ComponentInternalInstance | null,
   ) => {
     const fragmentStartAnchor = (n2.el = n1 ? n1.el : hostCreateText(''))!
     const fragmentEndAnchor = (n2.anchor = n1 ? n1.anchor : hostCreateText(''))!
@@ -241,7 +263,7 @@ function baseCreateRenderer(options: RendererOptions) {
       )
     }
     else {
-      patchChildren(n1, n2, container)
+      patchChildren(n1, n2, container, parentComponent)
     }
   }
 
@@ -249,6 +271,7 @@ function baseCreateRenderer(options: RendererOptions) {
     n1: VNode | null,
     n2: VNode,
     container: RendererElement,
+    parentComponent: ComponentInternalInstance | null,
   ) => {
     const c1 = n1 && n1.children
     const prevShapeFlag = n1 ? n1.shapeFlag : 0
@@ -277,6 +300,7 @@ function baseCreateRenderer(options: RendererOptions) {
             c1 as VNode[],
             c2 as VNodeArrayChildren,
             container,
+            parentComponent,
           )
         }
         else {
@@ -325,6 +349,7 @@ function baseCreateRenderer(options: RendererOptions) {
     c1: VNode[],
     c2: VNodeArrayChildren,
     container: RendererElement,
+    parentComponent: ComponentInternalInstance | null,
   ) => {
     let i = 0
     const l2 = c2.length
@@ -380,14 +405,126 @@ function baseCreateRenderer(options: RendererOptions) {
     }
     // unknown sequence
     else {
-      // forced unmount and mount
-      for (let idx = i; idx <= e1; idx++) {
-        umount(c1[idx])
+      const s1 = i
+      const s2 = i
+
+      // build key
+      const keyToNewIndexMap: Map<PropertyKey, number> = new Map()
+      for (i = s2; i <= e2; i++) {
+        const nextChild = (c2[i] = normalizeVNode(c2[i]))
+        if (nextChild.key != null) {
+          keyToNewIndexMap.set(nextChild.key, i)
+        }
       }
-      for (let idx = i; idx <= e2; idx++) {
-        patch(null, c2[idx] = normalizeVNode(c2[idx]), container)
+
+      let j
+      let patched = 0
+      const toBePatched = e2 - s2 + 1
+      let moved = false
+      let maxNewIndexSoFar = 0
+
+      // patch and umount
+      const newIndexToOldIndexMap = Array.from({ length: toBePatched }, () => 0)
+      for (i = s1; i <= e1; i++) {
+        const prevChild = c1[i]
+        if (patched >= toBePatched) {
+          // no need to patch
+          umount(prevChild)
+          continue
+        }
+
+        let newIndex
+        if (prevChild.key != null) {
+          newIndex = keyToNewIndexMap.get(prevChild.key)
+        }
+        else {
+          // key-less node, try to locate a key-less node of the same type
+          for (j = s2; j <= e2; j++) {
+            if (
+              newIndexToOldIndexMap[j - s2] === 0
+              && isSameVNodeType(prevChild, c2[j] as VNode)
+            ) {
+              newIndex = j
+              break
+            }
+          }
+        }
+
+        if (newIndex === undefined) {
+          umount(prevChild)
+        }
+        else {
+          newIndexToOldIndexMap[newIndex - s2] = i + 1
+          if (newIndex >= maxNewIndexSoFar) {
+            maxNewIndexSoFar = newIndex
+          }
+          else {
+            moved = true
+          }
+
+          patch(
+            prevChild,
+            c2[newIndex] as VNode,
+            container,
+            null,
+            parentComponent,
+          )
+          patched++
+        }
+      }
+
+      // move and mount
+      const increasingNewIndexSequence = moved
+        ? getSequence(newIndexToOldIndexMap)
+        : EMPTY_ARR
+      j = increasingNewIndexSequence.length - 1
+      for (i = toBePatched - 1; i >= 0; i--) {
+        const nextIndex = s2 + i
+        const nextChild = c2[nextIndex] as VNode
+        const anchorVNode = c2[nextIndex + 1] as VNode
+        const anchor = nextIndex + 1 < l2 ? anchorVNode.el || anchorVNode.placeholder : null
+
+        if (newIndexToOldIndexMap[i] === 0) {
+          // mount
+          patch(
+            null,
+            nextChild,
+            container,
+            anchor,
+            parentComponent,
+          )
+        }
+        else if (moved) {
+          // move
+          if (j < 0 || i !== increasingNewIndexSequence[j]) {
+            move(nextChild, container, anchor, MoveType.REORDER)
+          }
+          else {
+            j--
+          }
+        }
       }
     }
+  }
+
+  const move: MoveFn = (
+    vnode,
+    container,
+    anchor,
+    moveType,
+  ) => {
+    const { el, type, children } = vnode
+
+    if (type === Fragment) {
+      hostInsert(el!, container, anchor)
+      for (let i = 0; i < (children as VNode[]).length; i++) {
+        move((children as VNode[])[i], container, anchor, moveType)
+      }
+      hostInsert(vnode.anchor!, container, anchor)
+      return
+    }
+
+    hostInsert(el!, container, anchor)
   }
 
   const unmountChildren = (
@@ -438,4 +575,47 @@ function baseCreateRenderer(options: RendererOptions) {
   return {
     render,
   }
+}
+
+// longest increasing subsequence
+function getSequence(arr: number[]): number[] {
+  const p = arr.slice()
+  const result = [0]
+  let idx, lastTailIdx, left, right, mid
+  const len = arr.length
+  for (idx = 0; idx < len; idx++) {
+    const currentValue = arr[idx]
+    if (currentValue !== 0) {
+      lastTailIdx = result[result.length - 1]
+      if (arr[lastTailIdx] < currentValue) {
+        p[idx] = lastTailIdx
+        result.push(idx)
+        continue
+      }
+      left = 0
+      right = result.length - 1
+      while (left < right) {
+        mid = (left + right) >> 1
+        if (arr[result[mid]] < currentValue) {
+          left = mid + 1
+        }
+        else {
+          right = mid
+        }
+      }
+      if (currentValue < arr[result[left]]) {
+        if (left > 0) {
+          p[idx] = result[left - 1]
+        }
+        result[left] = idx
+      }
+    }
+  }
+  left = result.length
+  right = result[left - 1]
+  while (left-- > 0) {
+    result[left] = right
+    right = p[right]
+  }
+  return result
 }
