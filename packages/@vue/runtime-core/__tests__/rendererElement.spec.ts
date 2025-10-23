@@ -1,7 +1,7 @@
 import type { TestElement } from '@vue/runtime-test'
 import { h, serializeInner as inner, nodeOps, render } from '@vue/runtime-test'
 
-describe('renderer Element', () => {
+describe('renderer: element', () => {
   let root: TestElement
 
   beforeEach(() => {

@@ -7,8 +7,18 @@ export class EffectScope {
 
   effects: ReactiveEffect[] = []
 
-  constructor() {
+  parent: EffectScope | undefined
+  scopes: EffectScope[] | undefined
+  private index: number | undefined
 
+  constructor(public detached = false) {
+    this.parent = activeEffectScope
+    if (!detached && activeEffectScope) {
+      this.index
+        = (activeEffectScope.scopes || (activeEffectScope.scopes = [])).push(
+          this,
+        ) - 1
+    }
   }
 
   get active() {

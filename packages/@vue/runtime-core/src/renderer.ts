@@ -1,6 +1,7 @@
 import type { ComponentInternalInstance, Data } from './component'
 import type { VNode, VNodeArrayChildren } from './vnode'
 import { EMPTY_ARR, EMPTY_OBJ, ShapeFlags } from '@vue/shared'
+import { createComponentInstance } from './component'
 import { Comment, Fragment, isSameVNodeType, normalizeVNode, Text } from './vnode'
 import { warn } from './warning'
 
@@ -54,6 +55,13 @@ type MoveFn = (
   container: RendererElement,
   anchor: RendererNode | null,
   type: MoveType,
+) => void
+
+export type MountComponentFn = (
+  initialVNode: VNode,
+  container: RendererElement,
+  anchor: RendererNode | null,
+  parentComponent: ComponentInternalInstance | null,
 ) => void
 
 type ProcessTextOrCommentFn = (
@@ -124,6 +132,9 @@ function baseCreateRenderer(options: RendererOptions) {
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
           processElement(n1, n2, container, anchor, parentComponent)
+        }
+        else if (shapeFlag & ShapeFlags.COMPONENT) {
+          processComponent(n1, n2, container, anchor, parentComponent)
         }
         else if (__DEV__) {
           warn('Invalid VNode type:', type, `(${typeof type})`)
@@ -265,6 +276,34 @@ function baseCreateRenderer(options: RendererOptions) {
     else {
       patchChildren(n1, n2, container, parentComponent)
     }
+  }
+
+  const processComponent = (
+    n1: VNode | null,
+    n2: VNode,
+    container: RendererElement,
+    anchor: RendererNode | null,
+    parentComponent: ComponentInternalInstance | null,
+  ) => {
+    if (n1 == null) {
+      mountComponent(n2, container, anchor, parentComponent)
+    }
+    else {
+      updateComponent(n1, n2)
+    }
+  }
+
+  const mountComponent: MountComponentFn = (
+    initialVNode,
+    container,
+    anchor,
+    parentComponent,
+  ) => {
+    const instance = (initialVNode.component = createComponentInstance(initialVNode, parentComponent))
+  }
+
+  const updateComponent = () => {
+    //
   }
 
   const patchChildren = (

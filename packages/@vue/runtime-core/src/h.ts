@@ -23,6 +23,7 @@ h(Component, {}, {}) // named slots
 h(Component, null, {})
 **/
 
+import type { Component } from './component'
 import type { RawSlots } from './componentSlots'
 import type { Fragment, VNode, VNodeArrayChildren, VNodeProps } from './vnode'
 import { isArray, isObject } from '@vue/shared'
@@ -87,6 +88,16 @@ export function h(
   type: typeof Fragment,
   props?: RawProps | null,
   children?: VNodeArrayChildren,
+): VNode
+
+// catch-all for generic component types
+export function h(type: Component, children?: RawChildren): VNode
+
+// component without props
+export function h(
+  type: Component,
+  props?: RawProps | null,
+  children?: RawChildren | RawSlots
 ): VNode
 
 // Actual implementation

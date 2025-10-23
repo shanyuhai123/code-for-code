@@ -1,9 +1,10 @@
 import type { Ref } from '@vue/reactivity'
-import type { ComponentInternalInstance } from './component'
+import type { AppContext } from './apiCreateApp'
+import type { Component, ComponentInternalInstance } from './component'
 import type { RawSlots } from './componentSlots'
 import type { RendererNode } from './renderer'
 import { isRef } from '@vue/reactivity'
-import { isArray, isFunction, isString, ShapeFlags } from '@vue/shared'
+import { isArray, isFunction, isObject, isString, ShapeFlags } from '@vue/shared'
 import { currentRenderingInstance, currentScopeId } from './componentRenderContext'
 
 export const Fragment = Symbol.for('v-fgt') as any as {
@@ -18,6 +19,7 @@ export const Comment: unique symbol = Symbol.for('v-cmt')
 export type VNodeTypes
   = | string
     | VNode
+    | Component
     | typeof Fragment
     | typeof Text
     | typeof Comment
@@ -72,6 +74,7 @@ export interface VNode<
   type: VNodeTypes
   props: (VNodeProps & ExtraProps) | null
   children: VNodeNormalizedChildren
+  component: ComponentInternalInstance | null
 
   // DOM
   el: HostNode | null
@@ -82,6 +85,9 @@ export interface VNode<
   shapeFlag: number
   patchFlag: number
   dynamicChildren: (VNode[] & { hasOnce?: boolean }) | null
+
+  // application root node only
+  appContext: AppContext | null
 }
 
 export function isVNode(value: any): value is VNode {
@@ -127,7 +133,9 @@ function _createVNode(
 
   const shapeFlag = isString(type)
     ? ShapeFlags.ELEMENT
-    : 0
+    : isObject(type)
+      ? ShapeFlags.STATEFUL_COMPONENT
+      : 0
 
   return createBaseVNode(
     type,

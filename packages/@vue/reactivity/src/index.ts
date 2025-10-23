@@ -1,3 +1,7 @@
+export type {
+  ComputedGetter,
+} from './computed'
+
 export {
   computed,
 } from './computed'
@@ -8,8 +12,13 @@ export {
 } from './effect'
 
 export {
+  EffectScope,
+} from './effectScope'
+
+export {
   markRaw,
   reactive,
+  shallowReactive,
 } from './reactive'
 
 export {
