@@ -1,3 +1,5 @@
+import { makeMap } from './makeMap'
+
 export const EMPTY_OBJ: { readonly [key: string]: any } = __DEV__
   ? Object.freeze({})
   : {}
@@ -44,6 +46,13 @@ export const isIntegerKey = (key: unknown): boolean =>
   && key !== 'NaN'
   && key[0] !== '-'
   && `${Number.parseInt(key, 10)}` === key
+
+export const isReservedProp: (key: string) => boolean = makeMap(
+  ',key,ref,ref_for,ref_key,'
+  + 'onVnodeBeforeMount,onVnodeMounted,'
+  + 'onVnodeBeforeUpdate,onVnodeUpdated,'
+  + 'onVnodeBeforeUnmount,onVnodeUnmounted',
+)
 
 export const hasChanged = (value: any, oldValue: any): boolean =>
   !Object.is(value, oldValue)

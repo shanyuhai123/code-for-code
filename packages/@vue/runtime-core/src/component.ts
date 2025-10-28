@@ -3,7 +3,7 @@ import type { ComponentOptions } from './componentOptions'
 import type { ComponentPublicInstance } from './componentPublicInstance'
 import type { VNode, VNodeChild } from './vnode'
 import { EffectScope } from '@vue/reactivity'
-import { EMPTY_OBJ, ShapeFlags } from '@vue/shared'
+import { EMPTY_OBJ, NOOP, ShapeFlags } from '@vue/shared'
 import { createAppContext } from './apiCreateApp'
 import { initProps } from './componentProps'
 import { PublicInstanceProxyHandlers } from './componentPublicInstance'
@@ -46,6 +46,9 @@ export interface ComponentInternalInstance {
   attrs: Data
 
   propsDefaults: Data
+
+  // lifecycle
+  isMounted: boolean
 }
 
 export type ConcreteComponent
@@ -90,6 +93,8 @@ export function createComponentInstance(
     attrs: EMPTY_OBJ,
 
     propsDefaults: EMPTY_OBJ,
+
+    isMounted: false,
   }
 
   instance.ctx = { _: instance }
@@ -139,5 +144,7 @@ export function finishComponentSetup(instance: ComponentInternalInstance) {
         Component.render = compile(template)
       }
     }
+
+    instance.render = (Component.render || NOOP) as InternalRenderFunction
   }
 }

@@ -1,10 +1,10 @@
 import type { Ref } from '@vue/reactivity'
 import type { AppContext } from './apiCreateApp'
-import type { Component, ComponentInternalInstance } from './component'
+import type { Component, ComponentInternalInstance, Data } from './component'
 import type { RawSlots } from './componentSlots'
-import type { RendererNode } from './renderer'
+import type { RendererElement, RendererNode } from './renderer'
 import { isRef } from '@vue/reactivity'
-import { isArray, isFunction, isObject, isString, ShapeFlags } from '@vue/shared'
+import { isArray, isFunction, isObject, isString, PatchFlags, ShapeFlags } from '@vue/shared'
 import { currentRenderingInstance, currentScopeId } from './componentRenderContext'
 
 export const Fragment = Symbol.for('v-fgt') as any as {
@@ -66,6 +66,7 @@ export type VNodeNormalizedChildren
     | null
 export interface VNode<
   HostNode = RendererNode,
+  HostElement = RendererElement,
   ExtraProps = { [key: string]: any },
 > {
   __v_isVNode?: true
@@ -80,6 +81,7 @@ export interface VNode<
   el: HostNode | null
   placeholder: HostNode | null
   anchor: HostNode | null
+  target: HostElement | null
 
   // optimization only
   shapeFlag: number
@@ -240,4 +242,65 @@ function createBaseVNode(
   }
 
   return vnode
+}
+
+export function cloneVNode<T, U>(
+  vnode: VNode<T, U>,
+  extraProps?: (Data & VNodeProps) | null,
+): VNode<T, U> {
+  const { props, patchFlag, children } = vnode
+  const mergedProps = extraProps ? mergeProps(props || {}, extraProps) : props
+  const cloned: VNode<T, U> = {
+    __v_isVNode: true,
+
+    key: mergedProps && normalizeKey(mergedProps),
+    type: vnode.type,
+    props: mergedProps,
+    children: isArray(children) ? (children as VNode[]).map(deepCloneVNode) : children,
+    component: vnode.component,
+
+    el: vnode.el,
+    placeholder: vnode.placeholder,
+    anchor: vnode.anchor,
+    target: vnode.target,
+
+    shapeFlag: vnode.shapeFlag,
+    patchFlag:
+      extraProps && vnode.type !== Fragment
+        ? patchFlag === PatchFlags.CACHED
+          ? PatchFlags.FULL_PROPS
+          : patchFlag | PatchFlags.FULL_PROPS
+        : patchFlag,
+    dynamicChildren: vnode.dynamicChildren,
+
+    appContext: vnode.appContext,
+  }
+
+  return cloned
+}
+
+function deepCloneVNode(vnode: VNode): VNode {
+  const cloned = cloneVNode(vnode)
+
+  if (isArray(vnode.children)) {
+    cloned.children = (vnode.children as VNode[]).map(deepCloneVNode)
+  }
+
+  return cloned
+}
+
+export function mergeProps(...args: (Data & VNodeProps)[]): Data {
+  const ret: Data = {}
+
+  for (let i = 0; i < args.length; i++) {
+    const toMerge = args[i]
+
+    for (const key in toMerge) {
+      if (key !== '') {
+        ret[key] = toMerge[key]
+      }
+    }
+  }
+
+  return ret
 }

@@ -1,5 +1,6 @@
 import type { ComponentInternalInstance, Data } from './component'
 import { shallowReactive } from '@vue/reactivity'
+import { isReservedProp } from '@vue/shared'
 import { createInternalObject } from './internalObject'
 
 export function initProps(
@@ -12,6 +13,8 @@ export function initProps(
 
   instance.propsDefaults = Object.create(null)
 
+  setFullProps(instance, rawProps, props, attrs)
+
   if (isStateful) {
     instance.props = shallowReactive(props)
   }
@@ -20,4 +23,25 @@ export function initProps(
   }
 
   instance.attrs = attrs
+}
+
+function setFullProps(
+  instance: ComponentInternalInstance,
+  rawProps: Data | null,
+  props: Data,
+  attrs: Data,
+) {
+  if (rawProps) {
+    for (const key in rawProps) {
+      if (isReservedProp(key)) {
+        continue
+      }
+
+      const value = rawProps[key]
+
+      if (!(key in attrs) || value !== attrs[key]) {
+        attrs[key] = value
+      }
+    }
+  }
 }

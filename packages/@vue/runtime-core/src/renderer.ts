@@ -1,7 +1,9 @@
 import type { ComponentInternalInstance, Data } from './component'
 import type { VNode, VNodeArrayChildren } from './vnode'
+import { ReactiveEffect } from '@vue/reactivity'
 import { EMPTY_ARR, EMPTY_OBJ, ShapeFlags } from '@vue/shared'
-import { createComponentInstance } from './component'
+import { createComponentInstance, setupComponent } from './component'
+import { renderComponentRoot } from './componentRenderUtils'
 import { Comment, Fragment, isSameVNodeType, normalizeVNode, Text } from './vnode'
 import { warn } from './warning'
 
@@ -67,6 +69,13 @@ export type MountComponentFn = (
 type ProcessTextOrCommentFn = (
   n1: VNode | null,
   n2: VNode,
+  container: RendererElement,
+  anchor: RendererNode | null,
+) => void
+
+export type SetupRenderEffectFn = (
+  instance: ComponentInternalInstance,
+  initialVNode: VNode,
   container: RendererElement,
   anchor: RendererNode | null,
 ) => void
@@ -289,7 +298,7 @@ function baseCreateRenderer(options: RendererOptions) {
       mountComponent(n2, container, anchor, parentComponent)
     }
     else {
-      updateComponent(n1, n2)
+      // updateComponent(n1, n2)
     }
   }
 
@@ -300,10 +309,35 @@ function baseCreateRenderer(options: RendererOptions) {
     parentComponent,
   ) => {
     const instance = (initialVNode.component = createComponentInstance(initialVNode, parentComponent))
+
+    setupComponent(instance)
+    setupRenderEffect(instance, initialVNode, container, anchor)
   }
 
-  const updateComponent = () => {
-    //
+  // const updateComponent = () => {
+  //   //
+  // }
+
+  const setupRenderEffect: SetupRenderEffectFn = (
+    instance,
+    initialVNode,
+    container,
+    anchor,
+  ) => {
+    const componentUpdateFn = () => {
+      if (!instance.isMounted) {
+        const subTree = renderComponentRoot(instance)
+        patch(null, subTree, container, anchor)
+        initialVNode.el = subTree.el
+        instance.isMounted = true
+      }
+    }
+
+    const effect = new ReactiveEffect(componentUpdateFn)
+
+    const update = effect.run.bind(effect)
+
+    update()
   }
 
   const patchChildren = (
