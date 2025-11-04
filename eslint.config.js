@@ -7,6 +7,8 @@ export default antfu({
     'ts/no-unsafe-function-type': 'off',
     'node/prefer-global/process': 'off',
     'import/no-mutable-exports': 'off',
+    'no-cond-assign': 'off',
+    'no-useless-call': 'off',
     'prefer-rest-params': 'off',
     'ts/no-unnecessary-type-constraint': 'off',
     'ts/no-this-alias': 'off',

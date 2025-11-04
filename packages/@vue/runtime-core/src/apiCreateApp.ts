@@ -1,3 +1,5 @@
+import type { Component, ConcreteComponent } from './component'
+import type { NormalizedPropsOptions } from './componentProps'
 import type { ComponentCustomProperties } from './componentPublicInstance'
 import { NO } from '@vue/shared'
 
@@ -16,6 +18,9 @@ export interface AppConfig {
 export interface AppContext {
   app: App
   config: AppConfig
+  components: Record<string, Component>
+
+  propsCache: WeakMap<ConcreteComponent, NormalizedPropsOptions>
 }
 
 export function createAppContext(): AppContext {
@@ -26,5 +31,8 @@ export function createAppContext(): AppContext {
       performance: false,
       globalProperties: {},
     },
+    components: {},
+
+    propsCache: new WeakMap(),
   }
 }

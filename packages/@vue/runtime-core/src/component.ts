@@ -1,11 +1,12 @@
 import type { AppContext } from './apiCreateApp'
 import type { ComponentOptions } from './componentOptions'
+import type { ComponentPropsOptions, NormalizedPropsOptions } from './componentProps'
 import type { ComponentPublicInstance } from './componentPublicInstance'
 import type { VNode, VNodeChild } from './vnode'
 import { EffectScope } from '@vue/reactivity'
 import { EMPTY_OBJ, NOOP, ShapeFlags } from '@vue/shared'
 import { createAppContext } from './apiCreateApp'
-import { initProps } from './componentProps'
+import { initProps, normalizePropsOptions } from './componentProps'
 import { PublicInstanceProxyHandlers } from './componentPublicInstance'
 
 export type Data = Record<string, unknown>
@@ -37,6 +38,8 @@ export interface ComponentInternalInstance {
   accessCache: Data | null
   renderCache: (Function | VNode | undefined)[]
 
+  propsOptions: NormalizedPropsOptions
+
   proxy: ComponentPublicInstance | null
 
   // state
@@ -51,8 +54,20 @@ export interface ComponentInternalInstance {
   isMounted: boolean
 }
 
-export type ConcreteComponent
-  = | ComponentOptions
+export interface FunctionalComponent<
+  P = {},
+> {
+  (
+    props: P
+  ): any
+  props?: ComponentPropsOptions<P>
+}
+
+export type ConcreteComponent<
+  Props = {},
+>
+  = | FunctionalComponent<Props>
+    | ComponentOptions<Props>
 
 export type Component
   = | ConcreteComponent
@@ -92,6 +107,7 @@ export function createComponentInstance(
     props: EMPTY_OBJ,
     attrs: EMPTY_OBJ,
 
+    propsOptions: normalizePropsOptions(type, appContext),
     propsDefaults: EMPTY_OBJ,
 
     isMounted: false,

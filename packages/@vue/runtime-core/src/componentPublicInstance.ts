@@ -11,5 +11,22 @@ export interface ComponentPublicInstance {
 }
 
 export const PublicInstanceProxyHandlers: ProxyHandler<any> = {
+  get({ _: instance }, key: string) {
+    const { props, data, ctx } = instance
 
+    // props
+    if (key in props) {
+      return props[key]
+    }
+
+    // data
+    if (key in data) {
+      return data[key]
+    }
+
+    // ctx
+    if (key in ctx) {
+      return ctx[key]
+    }
+  },
 }
