@@ -26,11 +26,13 @@ export interface RendererOptions<
   ) => void
   insert: (el: HostNode, parent: HostElement, anchor?: HostNode | null) => void
   remove: (el: HostNode) => void
-  createElement: (type: string) => HostElement
+  createElement: (type: string, namespace?: ElementNamespace) => HostElement
   createText: (text: string) => HostNode
   createComment: (text: string) => HostNode
-  setElementText: (el: HostNode, text: string) => void
   setText: (node: HostNode, text: string) => void
+  setElementText: (el: HostNode, text: string) => void
+  parentNode: (node: HostNode) => HostElement | null
+  nextSibling: (node: HostNode) => HostNode | null
 }
 
 export interface RendererNode {
@@ -58,6 +60,8 @@ type MoveFn = (
   anchor: RendererNode | null,
   type: MoveType,
 ) => void
+
+type NextFn = (vnode: VNode) => RendererNode | null
 
 export type MountComponentFn = (
   initialVNode: VNode,
@@ -109,6 +113,8 @@ function baseCreateRenderer(options: RendererOptions) {
     createElement: hostCreateElement,
     setText: hostSetText,
     setElementText: hostSetElementText,
+    parentNode: hostParentNode,
+    nextSibling: hostNextSibling,
   } = options
 
   const patch: PatchFn = (
@@ -326,10 +332,17 @@ function baseCreateRenderer(options: RendererOptions) {
   ) => {
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
-        const subTree = renderComponentRoot(instance)
+        const subTree = (instance.subTree = renderComponentRoot(instance))
         patch(null, subTree, container, anchor)
         initialVNode.el = subTree.el
         instance.isMounted = true
+      }
+      else {
+        const nextTree = renderComponentRoot(instance)
+        const prevTree = instance.subTree
+        instance.subTree = nextTree
+        patch(prevTree, nextTree, hostParentNode(prevTree.el!)!, getNextHostNode(prevTree))
+        instance.vnode.el = nextTree.el
       }
     }
 
@@ -626,6 +639,13 @@ function baseCreateRenderer(options: RendererOptions) {
     if (vnode.el) {
       hostRemove(vnode.el)
     }
+  }
+
+  const getNextHostNode: NextFn = (vnode) => {
+    if (vnode.shapeFlag & ShapeFlags.COMPONENT) {
+      return getNextHostNode(vnode.component!.subTree)
+    }
+    return hostNextSibling(vnode.el!)
   }
 
   const render: RootRenderFunction = (vnode, container) => {

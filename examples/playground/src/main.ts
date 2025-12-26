@@ -1,57 +1,58 @@
-import { effect, reactive, ref } from '@vue/reactivity'
-import { Fragment, h } from '@vue/runtime-core'
+import { effect, ref } from '@vue/reactivity'
+import { h } from '@vue/runtime-core'
 import { render } from '@vue/runtime-dom'
 
 const style = document.createElement('style')
 document.head.appendChild(style)
 style.innerHTML = `
-  .blue {
-    color: blue;
+  .mounted {
+    color: green;
+    font-weight: bold;
+  }
+  .container {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  button {
+    padding: 8px 16px;
+    margin: 10px 5px;
+    cursor: pointer;
   }
 `
 
-const bool = ref(true)
+const count = ref(0)
 
-const keyedToggle = ref(true)
-const listA = [
-  { key: 'A', text: 'A' },
-  { key: 'B', text: 'B' },
-  { key: 'C', text: 'C' },
-  { key: 'D', text: 'D' },
-]
-const listB = [
-  { key: 'B', text: 'B' },
-  { key: 'D', text: 'D' },
-  { key: 'A', text: 'A' },
-  { key: 'C', text: 'C' },
-]
-const keyedList = ref(listA)
+const Counter = {
+  render(this: any) {
+    const isMounted = this.$.isMounted
+
+    return h('div', { class: 'container' }, [
+      h('h1', 'isMounted Test'),
+      h('div', { class: 'status' }, [
+        h('p', `Count: ${count.value}`),
+        h('p', `isMounted: ${isMounted}`),
+      ]),
+      h('div', [
+        h('button', {
+          onClick: () => {
+            count.value++
+          },
+        }, 'Increment Count'),
+        h('button', {
+          onClick: () => {
+            count.value--
+          },
+        }, 'Decrement Count'),
+        h('button', {
+          onClick: () => {
+            count.value = 0
+          },
+        }, 'Reset'),
+      ]),
+    ])
+  },
+}
 
 effect(() => {
-  const vnode = h('div', [
-    h('button', {
-      onClick: () => {
-        bool.value = !bool.value
-      },
-    }, 'Click me'),
-    bool.value ? 'Hello' : 'World',
-    h(Fragment, bool.value
-      ? [
-          'Hello',
-          'World',
-        ]
-      : []),
-
-    h('div', [
-      h('button', {
-        onClick: () => {
-          keyedToggle.value = !keyedToggle.value
-          keyedList.value = keyedToggle.value ? listA : listB
-        },
-      }, 'Toggle keyed order'),
-      h('ul', keyedList.value.map(item => h('li', { key: item.key }, item.text))),
-    ]),
-  ])
-
-  render(vnode, document.getElementById('app')!)
+  render(h(Counter), document.getElementById('app')!)
 })

@@ -1,8 +1,7 @@
 import type { AppContext } from './apiCreateApp'
 import type { ComponentInternalInstance, ConcreteComponent, Data } from './component'
-import { shallowReactive } from '@vue/reactivity'
+import { shallowReactive, toRaw } from '@vue/reactivity'
 import { camelize, EMPTY_ARR, EMPTY_OBJ, hasOwn, hyphenate, isArray, isFunction, isObject, isReservedProp } from '@vue/shared'
-import { toRaw } from 'packages/@vue/reactivity/src/reactive'
 import { createInternalObject } from './internalObject'
 
 export type ComponentPropsOptions<P = Data>

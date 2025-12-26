@@ -31,6 +31,7 @@ export interface ComponentInternalInstance {
 
   vnode: VNode
   next: VNode | null
+  subTree: VNode
 
   render: InternalRenderFunction | null
   ids: [string, number, number]
@@ -92,6 +93,7 @@ export function createComponentInstance(
     appContext,
     root: null!,
     next: null,
+    subTree: null!,
 
     ids: parent ? parent.ids : ['', 0, 0],
     accessCache: null!,

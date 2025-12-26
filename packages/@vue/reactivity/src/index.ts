@@ -19,6 +19,7 @@ export {
   markRaw,
   reactive,
   shallowReactive,
+  toRaw,
 } from './reactive'
 
 export {

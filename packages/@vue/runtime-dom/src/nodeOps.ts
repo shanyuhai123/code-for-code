@@ -1,4 +1,4 @@
-import type { RendererElement, RendererOptions } from '@vue/runtime-core'
+import type { RendererOptions } from '@vue/runtime-core'
 
 export const svgNS = 'http://www.w3.org/2000/svg'
 export const mathmlNS = 'http://www.w3.org/1998/Math/MathML'
@@ -18,14 +18,14 @@ export const nodeOps: Omit<RendererOptions<Node, Element>, 'patchProp'> = {
   createText: (text) => {
     return doc.createTextNode(text)
   },
-  createElement: (tag, namespace) => {
+  createElement: (tag, namespace): Element => {
     const el = namespace === 'svg'
       ? doc.createElementNS(svgNS, tag)
       : namespace === 'mathml'
         ? doc.createElementNS(mathmlNS, tag)
         : doc.createElement(tag)
 
-    return el as RendererElement
+    return el
   },
   setText: (el, text) => {
     el.nodeValue = text
@@ -33,4 +33,6 @@ export const nodeOps: Omit<RendererOptions<Node, Element>, 'patchProp'> = {
   setElementText: (el, text) => {
     el.textContent = text
   },
+  parentNode: node => node.parentNode as Element | null,
+  nextSibling: node => node.nextSibling,
 }

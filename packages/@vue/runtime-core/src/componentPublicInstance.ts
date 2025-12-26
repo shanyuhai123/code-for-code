@@ -14,6 +14,11 @@ export const PublicInstanceProxyHandlers: ProxyHandler<any> = {
   get({ _: instance }, key: string) {
     const { props, data, ctx } = instance
 
+    // public $ property
+    if (key === '$') {
+      return instance
+    }
+
     // props
     if (key in props) {
       return props[key]

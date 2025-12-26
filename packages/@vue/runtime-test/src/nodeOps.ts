@@ -227,20 +227,37 @@ function remove(child: TestNode, logOp = true): void {
   }
 }
 
+function parentNode(node: TestNode): TestElement | null {
+  return node.parentNode
+}
+
+function nextSibling(node: TestNode): TestNode | null {
+  const parent = node.parentNode
+  if (!parent) {
+    return null
+  }
+  const i = parent.children.indexOf(node)
+  return parent.children[i + 1] || null
+}
+
 export const nodeOps: {
   insert: typeof insert
   remove: typeof remove
   createElement: typeof createElement
   createText: typeof createText
   createComment: typeof createComment
-  setElementText: typeof setElementText
   setText: typeof setText
+  setElementText: typeof setElementText
+  parentNode: typeof parentNode
+  nextSibling: typeof nextSibling
 } = {
   insert,
   remove,
   createElement,
   createText,
   createComment,
-  setElementText,
   setText,
+  setElementText,
+  parentNode,
+  nextSibling,
 }
