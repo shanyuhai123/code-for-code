@@ -1,3 +1,4 @@
+import type { ReactiveEffect } from '@vue/reactivity'
 import type { AppContext } from './apiCreateApp'
 import type { ComponentOptions } from './componentOptions'
 import type { ComponentPropsOptions, NormalizedPropsOptions } from './componentProps'
@@ -32,6 +33,9 @@ export interface ComponentInternalInstance {
   vnode: VNode
   next: VNode | null
   subTree: VNode
+
+  effect: ReactiveEffect
+  update: () => void
 
   render: InternalRenderFunction | null
   ids: [string, number, number]
@@ -94,6 +98,9 @@ export function createComponentInstance(
     root: null!,
     next: null,
     subTree: null!,
+
+    effect: null!,
+    update: null!,
 
     ids: parent ? parent.ids : ['', 0, 0],
     accessCache: null!,

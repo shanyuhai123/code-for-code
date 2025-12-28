@@ -3,7 +3,7 @@ import type { VNode, VNodeArrayChildren } from './vnode'
 import { ReactiveEffect } from '@vue/reactivity'
 import { EMPTY_ARR, EMPTY_OBJ, ShapeFlags } from '@vue/shared'
 import { createComponentInstance, setupComponent } from './component'
-import { renderComponentRoot } from './componentRenderUtils'
+import { renderComponentRoot, shouldUpdateComponent } from './componentRenderUtils'
 import { Comment, Fragment, isSameVNodeType, normalizeVNode, Text } from './vnode'
 import { warn } from './warning'
 
@@ -304,7 +304,7 @@ function baseCreateRenderer(options: RendererOptions) {
       mountComponent(n2, container, anchor, parentComponent)
     }
     else {
-      // updateComponent(n1, n2)
+      updateComponent(n1, n2)
     }
   }
 
@@ -320,9 +320,18 @@ function baseCreateRenderer(options: RendererOptions) {
     setupRenderEffect(instance, initialVNode, container, anchor)
   }
 
-  // const updateComponent = () => {
-  //   //
-  // }
+  const updateComponent = (n1: VNode, n2: VNode) => {
+    const instance = (n2.component = n1.component)!
+
+    if (shouldUpdateComponent(n1, n2)) {
+      instance.next = n2
+      instance.update()
+    }
+    else {
+      n2.el = n1.el
+      instance.vnode = n2
+    }
+  }
 
   const setupRenderEffect: SetupRenderEffectFn = (
     instance,
@@ -346,9 +355,8 @@ function baseCreateRenderer(options: RendererOptions) {
       }
     }
 
-    const effect = new ReactiveEffect(componentUpdateFn)
-
-    const update = effect.run.bind(effect)
+    const effect = (instance.effect = new ReactiveEffect(componentUpdateFn))
+    const update = (instance.update = effect.run.bind(effect))
 
     update()
   }
