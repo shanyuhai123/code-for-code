@@ -2,7 +2,7 @@ import type { ShallowReactiveMarker } from './reactive'
 import { hasChanged } from '@vue/shared'
 import { ReactiveFlags } from './constants'
 import { Dep } from './dep'
-import { toRaw, toReactive } from './reactive'
+import { isReactive, toRaw, toReactive } from './reactive'
 
 declare const RefSymbol: unique symbol
 export declare const RawSymbol: unique symbol
@@ -111,3 +111,37 @@ export type UnwrapRefSimple<T> = T extends
                   [P in keyof T]: P extends symbol ? T[P] : UnwrapRef<T[P]>
                 }
               : T
+
+export type MaybeRef<T = any>
+  = | T
+    | Ref<T>
+    | ShallowRef<T>
+
+export function unref<T>(ref: MaybeRef<T>): T {
+  return isRef(ref) ? ref.value : ref
+}
+
+const shallowUnwrapHandlers: ProxyHandler<any> = {
+  get: (target, key, receiver) =>
+    key === ReactiveFlags.RAW
+      ? target
+      : unref(Reflect.get(target, key, receiver)),
+  set: (target, key, value, receiver) => {
+    const oldValue = target[key]
+    if (isRef(oldValue) && !isRef(value)) {
+      oldValue.value = value
+      return true
+    }
+    else {
+      return Reflect.set(target, key, value, receiver)
+    }
+  },
+}
+
+export function proxyRefs<T extends object>(
+  objectWithRefs: T,
+): ShallowUnwrapRef<T> {
+  return isReactive(objectWithRefs)
+    ? (objectWithRefs as ShallowUnwrapRef<T>)
+    : new Proxy(objectWithRefs, shallowUnwrapHandlers)
+}

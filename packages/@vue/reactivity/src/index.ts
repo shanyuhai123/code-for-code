@@ -1,5 +1,7 @@
 export type {
   ComputedGetter,
+  ComputedSetter,
+  WritableComputedOptions,
 } from './computed'
 
 export {

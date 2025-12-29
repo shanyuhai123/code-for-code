@@ -5,10 +5,12 @@ import type { ComponentPropsOptions, NormalizedPropsOptions } from './componentP
 import type { ComponentPublicInstance } from './componentPublicInstance'
 import type { VNode, VNodeChild } from './vnode'
 import { EffectScope } from '@vue/reactivity'
-import { EMPTY_OBJ, NOOP, ShapeFlags } from '@vue/shared'
+import { EMPTY_OBJ, isFunction, isObject, NOOP, ShapeFlags } from '@vue/shared'
 import { createAppContext } from './apiCreateApp'
 import { initProps, normalizePropsOptions } from './componentProps'
 import { PublicInstanceProxyHandlers } from './componentPublicInstance'
+import { currentRenderingInstance } from './componentRenderContext'
+import { callWithErrorHandling, ErrorCodes } from './errorHandling'
 
 export type Data = Record<string, unknown>
 
@@ -54,6 +56,8 @@ export interface ComponentInternalInstance {
   attrs: Data
 
   propsDefaults: Data
+
+  setupState: Data
 
   // lifecycle
   isMounted: boolean
@@ -115,6 +119,7 @@ export function createComponentInstance(
     data: EMPTY_OBJ,
     props: EMPTY_OBJ,
     attrs: EMPTY_OBJ,
+    setupState: EMPTY_OBJ,
 
     propsOptions: normalizePropsOptions(type, appContext),
     propsDefaults: EMPTY_OBJ,
@@ -126,6 +131,24 @@ export function createComponentInstance(
   instance.root = parent ? parent.root : instance
 
   return instance
+}
+
+export let currentInstance: ComponentInternalInstance | null = null
+
+export const getCurrentInstance: () => ComponentInternalInstance | null = () =>
+  currentInstance || currentRenderingInstance
+
+export const setCurrentInstance = (instance: ComponentInternalInstance) => {
+  const prev = currentInstance
+  internalSetCurrentInstance(instance)
+
+  return () => {
+    internalSetCurrentInstance(prev)
+  }
+}
+
+const internalSetCurrentInstance = (instance: ComponentInternalInstance | null): void => {
+  currentInstance = instance
 }
 
 export function isStatefulComponent(
@@ -146,8 +169,39 @@ export function setupComponent(instance: ComponentInternalInstance) {
 }
 
 function setupStatefulComponent(instance: ComponentInternalInstance) {
+  const Component = instance.type as ComponentOptions
+
   instance.accessCache = Object.create(null)
   instance.proxy = new Proxy(instance.ctx, PublicInstanceProxyHandlers)
+
+  const { setup } = Component
+  if (setup) {
+    const reset = setCurrentInstance(instance)
+    const setupResult = callWithErrorHandling(
+      setup,
+      instance,
+      ErrorCodes.SETUP_FUNCTION,
+      [
+        instance.props,
+      ],
+    )
+
+    reset()
+    handleSetupResult(instance, setupResult)
+  }
+  else {
+    finishComponentSetup(instance)
+  }
+}
+
+export function handleSetupResult(instance: ComponentInternalInstance, setupResult: unknown) {
+  if (isFunction(setupResult)) {
+    instance.render = setupResult as InternalRenderFunction
+  }
+  else if (isObject(setupResult)) {
+    // 自动解包 ref，让模板可以直接访问
+    instance.setupState = proxyRefs(setupResult)
+  }
 
   finishComponentSetup(instance)
 }
